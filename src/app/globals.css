@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+    --background: 0 0% 12%;
+    /* #1f1f1f */
+    --foreground: 0 0% 79%;
+    /* #c9c9c9 */
+    --heading: 0 0% 97%;
+    --card: 0 0% 14%;
+    /* #242424 */
+    --card-foreground: 0 0% 79%;
+    --popover: 0 0% 16%;
+    --popover-foreground: 0 0% 79%;
+    --primary: 255 67% 55%;
+    /* #6741d9 */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 18%;
+    /* #2e2e2e */
+    --secondary-foreground: 0 0% 92%;
+    --muted: 0 0% 18%;
+    --muted-foreground: 0 0% 58%;
+    --accent: 0 0% 22%;
+    --accent-foreground: 0 0% 97%;
+    --link: 255 94% 79%;
+    /* #b197fc */
+    --destructive: 0 94% 65%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 23%;
+    /* #3b3b3b */
+    --input: 0 0% 27%;
+    --ring: 255 94% 72%;
+    --success: 131 50% 50%;
+    /* #40c057 */
+    --warning: 42 96% 50%;
+    /* #fab005 */
+    --caution: 27 98% 54%;
+    /* #fd7e14 */
+    --danger: 0 94% 65%;
+    /* #fa5252 */
+    --radius: 0.5rem;
+  }
+
+  .light {
+    color-scheme: light;
+    --background: 210 17% 98%;
+    --foreground: 210 11% 15%;
+    --heading: 210 11% 8%;
+    --card: 0 0% 100%;
+    --card-foreground: 210 11% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 11% 15%;
+    --primary: 255 67% 55%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 17% 95%;
+    --secondary-foreground: 210 11% 15%;
+    --muted: 210 17% 95%;
+    --muted-foreground: 210 7% 40%;
+    --accent: 210 16% 92%;
+    --accent-foreground: 210 11% 8%;
+    --link: 255 78% 58%;
+    --destructive: 0 74% 54%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 210 14% 88%;
+    --input: 210 14% 80%;
+    --ring: 255 67% 55%;
+    --success: 131 54% 38%;
+    --warning: 35 100% 42%;
+    --caution: 21 90% 46%;
+    --danger: 0 74% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+    }
+  }
+}

@@ -1,0 +1,55 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  # Weekly rebuild so new models, downloads and release dates show up.
+  schedule:
+    - cron: "23 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      # Tests run against the committed catalog, before the refresh can change it.
+      - run: bun test
+      - name: Refresh the model catalog from Hugging Face
+        # Throttled or incomplete fetches exit non-zero; the committed catalog is used instead.
+        continue-on-error: true
+        run: bun scripts/build-catalog.ts
+        env:
+          # Optional repository secret: higher rate limits and gated configs read directly.
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      - id: pages
+        uses: actions/configure-pages@v5
+      - name: Build the static site
+        # The /api routes need a server; Pages only serves files.
+        run: rm -rf src/app/api && bun run build
+        env:
+          PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
