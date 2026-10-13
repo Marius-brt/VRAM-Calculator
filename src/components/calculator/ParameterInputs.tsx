@@ -336,14 +336,14 @@ export function ParameterInputs(p: ParameterInputsProps) {
 
       {!encoder && (
         <details className="group border-t">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 text-sm font-semibold text-heading [&::-webkit-details-marker]:hidden">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 sm:px-5 text-sm font-semibold text-heading [&::-webkit-details-marker]:hidden">
             <span>
               Advanced
               {advancedOn > 0 && <span className="ml-2 text-xs font-normal text-link">{advancedOn} on</span>}
             </span>
             <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180" />
           </summary>
-          <div className="space-y-5 px-5 pb-5">
+          <div className="space-y-5 px-4 pb-5 sm:px-5">
             {inference && (
               <>
                 <ToggleRow

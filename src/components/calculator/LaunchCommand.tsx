@@ -323,9 +323,7 @@ export function trainCommand(input: CalculatorInput): { cmd: string | null; note
         ),
         notes: [
           dataset,
-          ...(gpus > 1
-            ? ["This trains on one GPU; pick Hugging Face Trainer as the framework for a multi-GPU command."]
-            : []),
+          ...(gpus > 1 ? ["This trains on one GPU; pick Hugging Face Trainer as the framework for a multi-GPU command."] : []),
         ],
       };
     case "hf_trainer": {
@@ -390,7 +388,7 @@ export function trainCommand(input: CalculatorInput): { cmd: string | null; note
 export function Command({ cmd }: { cmd: string }) {
   return (
     <div className="flex items-start gap-2 rounded-md bg-background/60 py-1.5 pl-3 pr-1.5">
-      <code className="min-w-0 flex-1 break-words py-0.5 font-mono text-xs leading-relaxed text-foreground">
+      <code className="min-w-0 flex-1 overflow-x-auto py-0.5 font-mono text-xs leading-relaxed text-foreground">
         {cmd.split("\n").map((line, l) =>
           // Indented lines (YAML) keep their spaces; command lines wrap between flags, never inside one.
           /^\s/.test(line) ? (
@@ -400,10 +398,10 @@ export function Command({ cmd }: { cmd: string }) {
           ) : (
             <span key={l} className="block">
               {line.split(/ (?=-)/).map((part, i) => (
-                <span key={i} className="whitespace-nowrap">
+                <React.Fragment key={i}>
                   {i > 0 && " "}
-                  {part}
-                </span>
+                  <span className="inline-block max-w-full [overflow-wrap:anywhere]">{part}</span>
+                </React.Fragment>
               ))}
             </span>
           ),

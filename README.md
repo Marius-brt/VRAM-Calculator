@@ -37,14 +37,26 @@ Setups, imported models and the pool are saved in `localStorage` only.
 - **Decode speed**: memory-bandwidth bound, with runtime efficiency, MoE expert reads that grow with batch size,
   and per-step and per-layer overheads. Tensor parallel pays an all-reduce on its link; pipeline parallel pays a hop per stage.
 - **Prefill / time to first token**: compute bound, faster with FP8/FP4 tensor cores.
-- **Speculative decoding**: expected tokens per step from the acceptance rate (Leviathan et al.), minus the drafter's
-  cost and about 3% per drafted token for verification. Draft models, EAGLE-3 heads, MTP layers and DFlash drafters
-  add memory; n-gram and suffix lookup don't.
+- **Speculative decoding**: expected tokens per step from the acceptance rate (Leviathan et al.), against a verification
+  step over k + 1 tokens per sequence (MoE models touch more experts) plus the drafter's own passes and about 3% per
+  drafted token. Draft models, EAGLE-3 heads, MTP layers and DFlash drafters add memory; n-gram and suffix lookup don't.
 - **Runtimes** (vLLM, SGLang, TensorRT-LLM, llama.cpp, Ollama, Transformers) differ in memory reserve, overhead and efficiency.
 
-These are estimates calibrated against commonly reported figures (for example Llama 3.1 8B BF16 on one H100
-at about 135 tok/s). Real numbers vary with drivers, kernels and settings; very large MoE models are on the optimistic side.
-The checks live in [`src/__tests__/calculator.test.mjs`](src/__tests__/calculator.test.mjs).
+The speed constants of each runtime (bandwidth efficiency, per-layer overhead, prefill efficiency, fixed time to first
+token) are fitted to 123 published and contributed measurements in [`src/lib/data/benchmarks.json`](src/lib/data/benchmarks.json),
+per GPU class (vendor + consumer/workstation/datacenter) where there is enough data:
+
+- llama.cpp scoreboards for [CUDA](https://github.com/ggml-org/llama.cpp/discussions/15013),
+  [ROCm](https://github.com/ggml-org/llama.cpp/discussions/15021) and
+  [Apple Silicon](https://github.com/ggml-org/llama.cpp/discussions/4167): Llama 2 7B, 45 GPUs and 3 Macs.
+- [NVIDIA NIM](https://docs.nvidia.com/nim/benchmarking/llm/1.0.0/performance.html) (TensorRT-LLM) single-request
+  latency for Llama 3.1 8B, and [SemiAnalysis InferenceX](https://github.com/SemiAnalysisAI/InferenceX) vLLM and
+  TensorRT-LLM decode for Llama 3.3 70B on H200, B200 and MI300X to MI355X.
+- Contributed `vllm bench serve` runs: Qwen3.8-Flash-Next NVFP4 with MTP on 2× RTX PRO 6000 Blackwell.
+
+On GPUs left out of the fit, decode speed is typically within 10% and llama.cpp prompt processing within 25%.
+Runtimes without measurements here (SGLang, Transformers) keep typical values, and very large MoE models are on the
+optimistic side. The checks live in [`src/__tests__/calculator.test.mjs`](src/__tests__/calculator.test.mjs).
 
 ## Catalogs
 
@@ -82,6 +94,17 @@ bun test
 
 ```bash
 bun run build
+```
+
+After adding rows to `src/lib/data/benchmarks.json`, refit the speed constants and check the error on GPUs the fit
+hasn't seen:
+
+```bash
+bun scripts/fit-speed.ts --write
+```
+
+```bash
+bun scripts/fit-speed.ts --cv
 ```
 
 ## Deploy to GitHub Pages

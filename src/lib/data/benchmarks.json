@@ -1,0 +1,1245 @@
+[
+  {
+    "gpu": "5090_32",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 300.4,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "5090_32",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 14970.15,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "rtx_6000_blackwell_96",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 281.11,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "rtx_6000_blackwell_96",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 16618.98,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "h100_80",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 280.74,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "h100_80",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 11263.29,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "a100_80",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 200.9,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "a100_80",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 5285.96,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "4090_24",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 188.96,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "4090_24",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 14770.63,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "5080_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 184.68,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "5080_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 9487.7,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "5070ti_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 182.43,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "5070ti_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 8419.56,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "rtx_6000_ada_48",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 179.47,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "rtx_6000_ada_48",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 10576.85,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "3090ti_24",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 172.26,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "3090ti_24",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 6924.01,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "rtx_4500_blackwell_32",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 168.9,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "rtx_4500_blackwell_32",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 7251.66,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "3090_24",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 161.89,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "3090_24",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 5560.06,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "l40_48",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 153.76,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "l40_48",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 10097.64,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "4080super_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 147.48,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "4080super_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 9439.01,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "4080_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 143.47,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "4080_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 9205.93,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "rtx_a6000_48",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 144.87,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "rtx_a6000_48",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 5662.39,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "3080_10",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 139.95,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "3080_10",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 5569.56,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "rtx_4000_blackwell_24",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 136.38,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "rtx_4000_blackwell_24",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 5674.44,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "rtx_a5000_24",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 135.83,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "rtx_a5000_24",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 4552.15,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "v100_32",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 134.76,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "v100_32",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 2973.78,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "4070tisuper_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 132.85,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "4070tisuper_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 7612.32,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "5070_12",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 128.21,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "5070_12",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 5783.44,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "a40_48",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 126.24,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "a40_48",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 5256.38,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "a30_24",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 131.93,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "a30_24",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 3068.72,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "2080ti_11",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 109.17,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "2080ti_11",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 3107.61,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "5060ti_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 93.46,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "5060ti_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 4195.53,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "rtx_a4000_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 85.17,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "rtx_a4000_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 2807.83,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "3060_12",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 76.92,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "3060_12",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 2407.67,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "4060ti_8",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 64.03,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "4060ti_8",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 3803.45,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "rtx_4000_ada_20",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 61.37,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "rtx_4000_ada_20",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 3171.86,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "gb10_128",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 56.74,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "gb10_128",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 3661.37,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "rtx_2000_ada_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 50.71,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "rtx_2000_ada_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 2250.14,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "t4_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 44.03,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "t4_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 1309.73,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15013"
+  },
+  {
+    "gpu": "mi300x_192",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 218.53,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15021"
+  },
+  {
+    "gpu": "mi300x_192",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 11945.97,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15021"
+  },
+  {
+    "gpu": "rx_7900xtx_24",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 170.12,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15021"
+  },
+  {
+    "gpu": "rx_7900xtx_24",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 3874.25,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15021"
+  },
+  {
+    "gpu": "mi210_64",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 130.18,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15021"
+  },
+  {
+    "gpu": "mi210_64",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 2571.82,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15021"
+  },
+  {
+    "gpu": "radeon_pro_w7900_48",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 127.43,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15021"
+  },
+  {
+    "gpu": "radeon_pro_w7900_48",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 3472.86,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15021"
+  },
+  {
+    "gpu": "rx_9070_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 115.32,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15021"
+  },
+  {
+    "gpu": "rx_9070_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 2452.68,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15021"
+  },
+  {
+    "gpu": "rx_7900xt_20",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 112.3,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15021"
+  },
+  {
+    "gpu": "rx_7900xt_20",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 3261.75,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15021"
+  },
+  {
+    "gpu": "radeon_ai_pro_r9700_32",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 97.98,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15021"
+  },
+  {
+    "gpu": "radeon_ai_pro_r9700_32",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 4773.07,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15021"
+  },
+  {
+    "gpu": "rx_7900gre_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 97.53,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15021"
+  },
+  {
+    "gpu": "rx_7900gre_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 1598.79,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15021"
+  },
+  {
+    "gpu": "rx_9070xt_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 97.28,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15021"
+  },
+  {
+    "gpu": "rx_9070xt_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 4903.51,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15021"
+  },
+  {
+    "gpu": "rx_7800xt_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 95.99,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15021"
+  },
+  {
+    "gpu": "rx_7800xt_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 2304.63,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15021"
+  },
+  {
+    "gpu": "rx_9060xt_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 65.42,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15021"
+  },
+  {
+    "gpu": "rx_9060xt_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 1479.27,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15021"
+  },
+  {
+    "gpu": "ryzen_ai_max_395_128",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 49.87,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15021"
+  },
+  {
+    "gpu": "ryzen_ai_max_395_128",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 1003.53,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15021"
+  },
+  {
+    "gpu": "rx_7600xt_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 47.65,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15021"
+  },
+  {
+    "gpu": "rx_7600xt_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 1199.16,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/15021"
+  },
+  {
+    "gpu": "m1_ultra_128",
+    "model": "llama-2-7b-hf",
+    "quant": "fp16",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 47.82,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/4167#discussioncomment-18191340"
+  },
+  {
+    "gpu": "m1_ultra_128",
+    "model": "llama-2-7b-hf",
+    "quant": "fp16",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 1294.31,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/4167#discussioncomment-18191340"
+  },
+  {
+    "gpu": "m1_ultra_128",
+    "model": "llama-2-7b-hf",
+    "quant": "q8_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 79.13,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/4167#discussioncomment-18191340"
+  },
+  {
+    "gpu": "m1_ultra_128",
+    "model": "llama-2-7b-hf",
+    "quant": "q8_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 1167.67,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/4167#discussioncomment-18191340"
+  },
+  {
+    "gpu": "m1_ultra_128",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 113.79,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/4167#discussioncomment-18191340"
+  },
+  {
+    "gpu": "m1_ultra_128",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 1179.89,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/4167#discussioncomment-18191340"
+  },
+  {
+    "gpu": "m2_ultra_192",
+    "model": "llama-2-7b-hf",
+    "quant": "fp16",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 49.55,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/4167"
+  },
+  {
+    "gpu": "m2_ultra_192",
+    "model": "llama-2-7b-hf",
+    "quant": "fp16",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 1627.82,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/4167"
+  },
+  {
+    "gpu": "m2_ultra_192",
+    "model": "llama-2-7b-hf",
+    "quant": "q8_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 82.83,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/4167"
+  },
+  {
+    "gpu": "m2_ultra_192",
+    "model": "llama-2-7b-hf",
+    "quant": "q8_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 1486.51,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/4167"
+  },
+  {
+    "gpu": "m2_ultra_192",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 125.21,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/4167"
+  },
+  {
+    "gpu": "m2_ultra_192",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 1488.81,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/4167"
+  },
+  {
+    "gpu": "m5_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q8_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 18.42,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/4167#discussioncomment-18210351"
+  },
+  {
+    "gpu": "m5_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q8_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 715.42,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/4167#discussioncomment-18210351"
+  },
+  {
+    "gpu": "m5_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "decode_tps",
+    "tokens": 128,
+    "value": 31.88,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/4167#discussioncomment-18210351"
+  },
+  {
+    "gpu": "m5_16",
+    "model": "llama-2-7b-hf",
+    "quant": "q4_0",
+    "runtime": "llama_cpp",
+    "metric": "prefill_tps",
+    "tokens": 512,
+    "value": 722.79,
+    "source": "https://github.com/ggml-org/llama.cpp/discussions/4167#discussioncomment-18210351"
+  },
+  {
+    "gpu": "h100_80",
+    "model": "llama-3-1-8b-instruct",
+    "quant": "fp8",
+    "runtime": "tensorrt_llm",
+    "metric": "decode_tps",
+    "tokens": 1500,
+    "value": 220.75,
+    "source": "https://docs.nvidia.com/nim/benchmarking/llm/1.0.0/performance.html"
+  },
+  {
+    "gpu": "h100_80",
+    "model": "llama-3-1-8b-instruct",
+    "quant": "fp8",
+    "runtime": "tensorrt_llm",
+    "metric": "ttft_ms",
+    "tokens": 1000,
+    "value": 19.03,
+    "source": "https://docs.nvidia.com/nim/benchmarking/llm/1.0.0/performance.html"
+  },
+  {
+    "gpu": "h100_80",
+    "model": "llama-3-1-8b-instruct",
+    "quant": "fp16",
+    "runtime": "tensorrt_llm",
+    "metric": "decode_tps",
+    "tokens": 1500,
+    "value": 153.37,
+    "source": "https://docs.nvidia.com/nim/benchmarking/llm/1.0.0/performance.html"
+  },
+  {
+    "gpu": "h100_80",
+    "model": "llama-3-1-8b-instruct",
+    "quant": "fp16",
+    "runtime": "tensorrt_llm",
+    "metric": "ttft_ms",
+    "tokens": 1000,
+    "value": 27.36,
+    "source": "https://docs.nvidia.com/nim/benchmarking/llm/1.0.0/performance.html"
+  },
+  {
+    "gpu": "h200_141",
+    "model": "llama-3-1-8b-instruct",
+    "quant": "fp8",
+    "runtime": "tensorrt_llm",
+    "metric": "decode_tps",
+    "tokens": 1500,
+    "value": 235.85,
+    "source": "https://docs.nvidia.com/nim/benchmarking/llm/1.0.0/performance.html"
+  },
+  {
+    "gpu": "h200_141",
+    "model": "llama-3-1-8b-instruct",
+    "quant": "fp8",
+    "runtime": "tensorrt_llm",
+    "metric": "ttft_ms",
+    "tokens": 1000,
+    "value": 19.79,
+    "source": "https://docs.nvidia.com/nim/benchmarking/llm/1.0.0/performance.html"
+  },
+  {
+    "gpu": "l40s_48",
+    "model": "llama-3-1-8b-instruct",
+    "quant": "fp8",
+    "runtime": "tensorrt_llm",
+    "metric": "decode_tps",
+    "tokens": 1500,
+    "value": 71.58,
+    "source": "https://docs.nvidia.com/nim/benchmarking/llm/1.0.0/performance.html"
+  },
+  {
+    "gpu": "l40s_48",
+    "model": "llama-3-1-8b-instruct",
+    "quant": "fp8",
+    "runtime": "tensorrt_llm",
+    "metric": "ttft_ms",
+    "tokens": 1000,
+    "value": 44.61,
+    "source": "https://docs.nvidia.com/nim/benchmarking/llm/1.0.0/performance.html"
+  },
+  {
+    "gpu": "h200_141",
+    "model": "llama-3-3-70b-instruct",
+    "quant": "fp8",
+    "runtime": "vllm",
+    "metric": "decode_tps",
+    "tokens": 1500,
+    "batch": 4,
+    "value": 46.51,
+    "source": "https://github.com/SemiAnalysisAI/InferenceX/actions/runs/18924448230"
+  },
+  {
+    "gpu": "b200_180",
+    "model": "llama-3-3-70b-instruct",
+    "quant": "fp8",
+    "runtime": "vllm",
+    "metric": "decode_tps",
+    "tokens": 1500,
+    "batch": 4,
+    "value": 61.2,
+    "source": "https://github.com/SemiAnalysisAI/InferenceX/actions/runs/18924448230"
+  },
+  {
+    "gpu": "mi300x_192",
+    "model": "llama-3-3-70b-instruct",
+    "quant": "fp8",
+    "runtime": "vllm",
+    "metric": "decode_tps",
+    "tokens": 1500,
+    "batch": 4,
+    "value": 38.37,
+    "source": "https://github.com/SemiAnalysisAI/InferenceX/actions/runs/18924448230"
+  },
+  {
+    "gpu": "mi325x_256",
+    "model": "llama-3-3-70b-instruct",
+    "quant": "fp8",
+    "runtime": "vllm",
+    "metric": "decode_tps",
+    "tokens": 1500,
+    "batch": 4,
+    "value": 48.01,
+    "source": "https://github.com/SemiAnalysisAI/InferenceX/actions/runs/18924448230"
+  },
+  {
+    "gpu": "mi355x_288",
+    "model": "llama-3-3-70b-instruct",
+    "quant": "fp8",
+    "runtime": "vllm",
+    "metric": "decode_tps",
+    "tokens": 1500,
+    "batch": 4,
+    "value": 61.58,
+    "source": "https://github.com/SemiAnalysisAI/InferenceX/actions/runs/18924448230"
+  },
+  {
+    "gpu": "h200_141",
+    "model": "llama-3-3-70b-instruct",
+    "quant": "fp8",
+    "runtime": "tensorrt_llm",
+    "metric": "decode_tps",
+    "tokens": 1500,
+    "batch": 4,
+    "value": 49.68,
+    "source": "https://github.com/SemiAnalysisAI/InferenceX/actions/runs/18924448230"
+  },
+  {
+    "gpu": "b200_180",
+    "model": "llama-3-3-70b-instruct",
+    "quant": "fp8",
+    "runtime": "tensorrt_llm",
+    "metric": "decode_tps",
+    "tokens": 1500,
+    "batch": 4,
+    "value": 68.49,
+    "source": "https://github.com/SemiAnalysisAI/InferenceX/actions/runs/18924448230"
+  },
+  {
+    "gpu": "rtx_6000_blackwell_96",
+    "model": "qwen3-8-flash-next",
+    "quant": "nvfp4",
+    "runtime": "vllm",
+    "metric": "decode_tps",
+    "tokens": 1750,
+    "batch": 1,
+    "gpus": 2,
+    "spec": { "method": "mtp", "tokens": 3, "acceptance_length": 2.54 },
+    "value": 169.8,
+    "source": "Contributed: vllm bench serve on 2\u00d7 RTX PRO 6000 Blackwell, random 1,500 in / 500 out, 2026-10-13"
+  },
+  {
+    "gpu": "rtx_6000_blackwell_96",
+    "model": "qwen3-8-flash-next",
+    "quant": "nvfp4",
+    "runtime": "vllm",
+    "metric": "decode_tps",
+    "tokens": 1750,
+    "batch": 12,
+    "gpus": 2,
+    "spec": { "method": "mtp", "tokens": 3, "acceptance_length": 2.28 },
+    "value": 56.8,
+    "source": "Contributed: vllm bench serve on 2\u00d7 RTX PRO 6000 Blackwell, random 1,500 in / 500 out, 2026-10-13"
+  }
+]

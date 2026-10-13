@@ -2,7 +2,9 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { BarChart2, Bookmark, Boxes, Check, Download, Link2, Moon, Search, Sun } from "lucide-react";
+import Link from "next/link";
+import { BarChart2, BookOpen, Bookmark, Boxes, Check, Download, Github, Link2, Moon, Search, Sun } from "lucide-react";
+import { REPO_URL } from "@/components/SiteFooter";
 import { Segmented } from "./controls";
 import type { View } from "./VramCalculatorApp";
 
@@ -20,9 +22,9 @@ interface CalculatorHeaderProps {
 
 function HeaderButton({ icon: Icon, label, onClick }: { icon: typeof Search; label: string; onClick: () => void }) {
   return (
-    <Button variant="ghost" size="sm" onClick={onClick} title={label} className="gap-1.5 px-2 text-[13px] lg:px-2.5">
+    <Button variant="ghost" size="sm" onClick={onClick} title={label} className="gap-1.5 px-2 text-[13px] xl:px-2.5">
       <Icon />
-      <span className="sr-only lg:not-sr-only">{label}</span>
+      <span className="sr-only xl:not-sr-only">{label}</span>
     </Button>
   );
 }
@@ -55,9 +57,7 @@ export function CalculatorHeader({
   return (
     <header className="sticky top-0 z-40 border-b bg-background/85 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-[1320px] items-center gap-0.5 px-4 sm:gap-2 sm:px-6">
-        <h1 className="hidden min-w-0 truncate pr-2 text-[15px] font-semibold text-heading sm:block">
-          VRAM Calculator
-        </h1>
+        <h1 className="hidden min-w-0 truncate pr-2 text-[15px] font-semibold text-heading sm:block">VRAM Calculator</h1>
         <Segmented
           label="View"
           value={view}
@@ -87,6 +87,18 @@ export function CalculatorHeader({
             <Download />
           </Button>
         )}
+        {/* On phones these two live in the footer; the header row is full. */}
+        <Button variant="ghost" size="sm" asChild className="hidden gap-1.5 px-2 text-[13px] sm:inline-flex xl:px-2.5">
+          <Link href="/methodology" title="Methodology">
+            <BookOpen />
+            <span className="sr-only xl:not-sr-only">Methodology</span>
+          </Link>
+        </Button>
+        <Button variant="ghost" size="icon" asChild className="hidden h-8 w-8 sm:inline-flex">
+          <a href={REPO_URL} title="Source code on GitHub" aria-label="Source code on GitHub">
+            <Github />
+          </a>
+        </Button>
         <Button
           variant="ghost"
           size="icon"

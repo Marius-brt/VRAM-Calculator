@@ -134,7 +134,7 @@ function PinControls({
 
   return (
     <div className="space-y-2">
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 items-end gap-2">
         <Field label="Node">
           <Select
             value={pin.nodeId ?? "auto"}
@@ -585,7 +585,7 @@ export function PoolPlanner({ gpus, models, pool, setPool, onOpenHfImport }: Poo
               const miss = plan.unplaced.find((x) => x.modelId === m.id);
               if (!p) {
                 return (
-                  <div key={m.id} className="rounded-lg border border-danger/40 p-4">
+                  <div key={m.id} className="rounded-lg border border-danger/40 p-3 sm:p-4">
                     <div className="flex items-center gap-2 font-medium text-heading">
                       <span className="h-2.5 w-2.5 rounded-sm" style={{ background: colorOf(m.id) }} />
                       {m.model.name}
@@ -617,7 +617,7 @@ export function PoolPlanner({ gpus, models, pool, setPool, onOpenHfImport }: Poo
               const gbPerUser = kvGb / m.users || 0;
               const moreUsers = gbPerUser > 0 ? Math.floor(freeGb / gbPerUser) : null;
               return (
-                <div key={m.id} className="space-y-3 rounded-lg border p-4">
+                <div key={m.id} className="space-y-3 rounded-lg border p-3 sm:p-4">
                   <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                     <span className="flex items-center gap-2 font-medium text-heading">
                       <span className="h-2.5 w-2.5 rounded-sm" style={{ background: colorOf(m.id) }} />

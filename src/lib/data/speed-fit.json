@@ -1,0 +1,96 @@
+{
+ "llama_cpp": {
+  "all": {
+   "bwEff": 0.916,
+   "layerUs": 57,
+   "prefillMfu": 0.612
+  },
+  "nvidia-consumer": {
+   "bwEff": 0.845,
+   "layerUs": 12.5,
+   "prefillMfu": 1.21
+  },
+  "nvidia-workstation": {
+   "bwEff": 0.819,
+   "layerUs": 12.5,
+   "prefillMfu": 0.484
+  },
+  "nvidia-datacenter": {
+   "bwEff": 0.754,
+   "layerUs": 46.9,
+   "prefillMfu": 0.312
+  },
+  "amd-datacenter": {
+   "prefillMfu": 0.154
+  },
+  "amd-consumer": {
+   "bwEff": 0.77,
+   "layerUs": 37.4,
+   "prefillMfu": 0.387
+  },
+  "amd-workstation": {
+   "prefillMfu": 0.503
+  },
+  "apple-consumer": {
+   "bwEff": 0.926,
+   "layerUs": 79.5,
+   "prefillMfu": 0.744
+  }
+ },
+ "tensorrt_llm": {
+  "all": {
+   "bwEff": 0.93,
+   "layerUs": 50.6,
+   "prefillMfu": 0.724,
+   "ttftMs": 4.59
+  }
+ },
+ "vllm": {
+  "all": {
+   "bwEff": 0.755,
+   "layerUs": 50.1
+  },
+  "amd-datacenter": {
+   "bwEff": 0.579,
+   "layerUs": 0.38
+  }
+ },
+ "ollama": {
+  "all": {
+   "bwEff": 0.916,
+   "layerUs": 57,
+   "prefillMfu": 0.612
+  },
+  "nvidia-consumer": {
+   "bwEff": 0.845,
+   "layerUs": 12.5,
+   "prefillMfu": 1.21
+  },
+  "nvidia-workstation": {
+   "bwEff": 0.819,
+   "layerUs": 12.5,
+   "prefillMfu": 0.484
+  },
+  "nvidia-datacenter": {
+   "bwEff": 0.754,
+   "layerUs": 46.9,
+   "prefillMfu": 0.312
+  },
+  "amd-datacenter": {
+   "prefillMfu": 0.154
+  },
+  "amd-consumer": {
+   "bwEff": 0.77,
+   "layerUs": 37.4,
+   "prefillMfu": 0.387
+  },
+  "amd-workstation": {
+   "prefillMfu": 0.503
+  },
+  "apple-consumer": {
+   "bwEff": 0.926,
+   "layerUs": 79.5,
+   "prefillMfu": 0.744
+  }
+ }
+}

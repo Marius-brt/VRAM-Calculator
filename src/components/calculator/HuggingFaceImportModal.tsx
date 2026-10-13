@@ -102,7 +102,7 @@ export function HuggingFaceImportModal({ open, onClose, onModelImported }: Huggi
               placeholder="meta-llama/Llama-3.1-8B-Instruct"
               value={customRepoId}
               onChange={(e) => setCustomRepoId(e.target.value)}
-              className="h-9 text-sm"
+              className="h-9"
             />
             <Button
               size="sm"

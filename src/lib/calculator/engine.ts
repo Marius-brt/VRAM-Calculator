@@ -1,4 +1,5 @@
 import { CalculatorInput, CalculatorOutput, GpuSpec, ModelVariant } from "./types";
+import speedFit from "../data/speed-fit.json";
 
 /**
  * VRAM, speed and cost model. Pure functions, no I/O: runs in the browser and on the server.
@@ -8,7 +9,8 @@ import { CalculatorInput, CalculatorOutput, GpuSpec, ModelVariant } from "./type
  * Speed: decoding is bandwidth-bound (weights + the experts a batch touches + KV reads, plus
  * tensor-parallel all-reduces); prefill is compute-bound. Fine-tuning uses the usual bytes per
  * parameter and the activation formula from Korthikanti et al. (2022).
- * Efficiency factors are typical values for each runtime, not measurements of your system.
+ * Speed constants start from typical values per runtime and are fitted to published benchmarks per GPU class
+ * (scripts/fit-speed.ts, src/lib/data/benchmarks.json); they are not measurements of your system.
  */
 
 const GiB = 1024 ** 3;
@@ -28,6 +30,7 @@ export const WEIGHT_BITS: Record<string, number> = {
   q5_k_s: 5.54,
   q4_k_m: 4.85,
   q4_k_s: 4.6,
+  q4_0: 4.54,
   nvfp4: 4.5,
   int4: 4.5,
   exl2: 4.5,
@@ -39,7 +42,7 @@ export const WEIGHT_BITS: Record<string, number> = {
 };
 const isGguf = (q: string) => /^q\d/.test(q);
 
-const KV_BYTES: Record<string, number> = { auto: 2, fp16: 2, bf16: 2, fp8: 1, int8: 1, int4: 0.5 };
+export const KV_BYTES: Record<string, number> = { auto: 2, fp16: 2, bf16: 2, fp8: 1, int8: 1, int4: 0.5 };
 
 interface Runtime {
   /** Share of GPU memory the runtime will use (e.g. vLLM --gpu-memory-utilization). */
@@ -55,11 +58,12 @@ interface Runtime {
   prefillMfu: number;
   /** Tokens processed per prefill chunk (sizes the activation buffer). */
   chunk: number;
+  /** Fixed part of time to first token: scheduling, tokenization, sampling (default 15 ms). */
+  ttftMs?: number;
 }
 
-// Calibrated against commonly reported single-stream numbers (e.g. Llama 3.1 8B BF16 on H100 ≈ 130 tok/s,
-// Q4_K_M on an RTX 4090 ≈ 130 tok/s). llama.cpp prefill uses int8 kernels, hence the high MFU.
-const RUNTIMES: Record<string, Runtime> = {
+// Starting values. FITTED (below) replaces the speed constants of runtimes that have published benchmarks.
+export const RUNTIMES: Record<string, Runtime> = {
   vllm: { reserve: 0.9, overheadGb: 1.5, bwEff: 0.72, stepMs: 0.6, layerUs: 4, moeLayerUs: 50, prefillMfu: 0.45, chunk: 8192 },
   sglang: { reserve: 0.88, overheadGb: 1.5, bwEff: 0.74, stepMs: 0.5, layerUs: 4, moeLayerUs: 40, prefillMfu: 0.45, chunk: 8192 },
   tensorrt_llm: {
@@ -87,8 +91,20 @@ const RUNTIMES: Record<string, Runtime> = {
   generic: { reserve: 0.9, overheadGb: 1, bwEff: 0.7, stepMs: 1, layerUs: 10, moeLayerUs: 60, prefillMfu: 0.4, chunk: 4096 },
 };
 
+/**
+ * Speed constants fitted to src/lib/data/benchmarks.json by scripts/fit-speed.ts: per runtime, values for every GPU
+ * ("all") and per GPU class. llama.cpp's kernels, for one, run far below the tensor-core peak of datacenter GPUs.
+ */
+export const FITTED: Record<string, Record<string, Partial<Runtime>>> = speedFit;
+export const gpuClass = (gpu: GpuSpec) => `${gpu.vendor}-${gpu.category}`;
+
+export function runtimeFor(name: string, gpu: GpuSpec): Runtime {
+  const key = name in RUNTIMES ? name : "generic";
+  return { ...RUNTIMES[key], ...FITTED[key]?.all, ...FITTED[key]?.[gpuClass(gpu)] };
+}
+
 /** GPU-to-GPU links: bandwidth per direction (GB/s) and all-reduce latency (µs). */
-const LINKS: Record<string, { gbps: number; us: number }> = {
+export const LINKS: Record<string, { gbps: number; us: number }> = {
   nvlink_gen6: { gbps: 1800, us: 4 },
   nvlink_gen5: { gbps: 900, us: 5 },
   nvlink_gen4: { gbps: 450, us: 6 },
@@ -135,7 +151,7 @@ export function defaultGpuLink(gpu?: Pick<GpuSpec, "key" | "category">) {
 }
 
 /** Host memory bandwidth for layers offloaded to the CPU (dual-channel DDR5). */
-const CPU_GBPS = 60;
+export const CPU_GBPS = 60;
 
 export const isEncoderTask = (m?: ModelVariant) => m?.task === "embedding" || m?.task === "reranking";
 
@@ -265,28 +281,34 @@ export function calculate(input: CalculatorInput, rawGpu: GpuSpec): CalculatorOu
 // ─── Inference ────────────────────────────────────────────────────────────────
 
 /**
- * Speculative decoding drafter: bytes it adds to each copy and the cost of drafting k tokens, as a share of one
- * target step. Learned drafters are sized from the target: an EAGLE-3 head is one decoder layer plus a 32K-token
- * output head, DFlash about five layers that draft a whole block in one pass, MTP one more layer of the model.
+ * Speculative decoding drafter: bytes it adds to each copy, and for each drafting pass the bytes it reads and the layers
+ * it runs. Learned drafters are sized from the target: an EAGLE-3 head is one decoder layer plus a 32K-token output head,
+ * DFlash about five layers that draft a whole block in one pass, MTP one more layer of the model; MTP and DFlash also
+ * run the target's output head. A separate draft model is taken as 16 layers.
  */
 function drafter(input: CalculatorInput, g: Geometry, bytesPerParam: number, k: number) {
   const layer = 12 * g.hidden ** 2;
-  const bf16 = (params: number, cost: number) => ({ bytes: params * 2, cost });
+  const head = g.vocab * g.hidden * 2;
   switch (input.speculative_method ?? "draft") {
     case "ngram":
     case "suffix":
-      return { bytes: 0, cost: 0 };
+      return { bytes: 0, read: 0, passes: 0, layers: 0 };
     case "mtp":
-      return { bytes: (g.total / g.layers) * bytesPerParam, cost: k / g.layers };
+      return {
+        bytes: (g.total / g.layers) * bytesPerParam,
+        read: (g.active / g.layers) * bytesPerParam + head,
+        passes: k,
+        layers: 1,
+      };
     case "eagle3": {
       const p = layer + 32000 * g.hidden;
-      return bf16(p, (k * p) / g.active);
+      return { bytes: p * 2, read: p * 2, passes: k, layers: 1 };
     }
     case "dflash":
-      return bf16(5 * layer, (5 * layer) / g.active);
+      return { bytes: 5 * layer * 2, read: 5 * layer * 2 + head, passes: 1, layers: 5 };
     default: {
       const p = n(input.speculative_draft_model_params, 0.5) * 1e9;
-      return bf16(p, (k * p) / g.active);
+      return { bytes: p * 2, read: p * 2, passes: k, layers: 16 };
     }
   }
 }
@@ -295,7 +317,7 @@ function inference(input: CalculatorInput, gpu: GpuSpec): CalculatorOutput {
   const m = input.model_variant;
   const g = geometry(m);
   const quant = (input.quantization || "fp16").toLowerCase();
-  const runtime = RUNTIMES[input.framework_preset ?? "vllm"] ?? RUNTIMES.generic;
+  const runtime = runtimeFor(input.framework_preset ?? "vllm", gpu);
   const warnings: string[] = [];
 
   const tp = Math.max(1, Math.round(input.tp_degree || 1));
@@ -338,7 +360,8 @@ function inference(input: CalculatorInput, gpu: GpuSpec): CalculatorOutput {
   const scoresGpu = eagerAttention ? (chunk * seq * g.heads * 4) / tp / pp : 0;
 
   const draftTokens = n(input.speculative_draft_tokens, 4);
-  const draft = input.enable_speculative_decoding ? drafter(input, g, wBytes / g.total, draftTokens) : { bytes: 0, cost: 0 };
+  const spec = !!input.enable_speculative_decoding;
+  const draft = spec ? drafter(input, g, wBytes / g.total, draftTokens) : { bytes: 0, read: 0, passes: 0, layers: 0 };
   const draftGpu = draft.bytes / tp;
 
   const perGpu = weightsGpu + kvGpu + actGpu + scoresGpu + overheadGpu + draftGpu;
@@ -352,41 +375,47 @@ function inference(input: CalculatorInput, gpu: GpuSpec): CalculatorOutput {
   const perNode = n(input.gpus_per_node, gpus);
   const tpLink = tp > perNode ? netLink : intraLink; // tensor parallel across nodes rides the network
   const hopLink = (input.num_nodes ?? 1) > 1 ? netLink : intraLink;
-  const bw = gpu.bandwidth_gbs * 1e9 * runtime.bwEff * (gpu.type === "apple_silicon" ? 0.9 : 1);
+  const bw = gpu.bandwidth_gbs * 1e9 * runtime.bwEff;
   const flops = gpu.fp16_tflops * 1e12;
   const bytesPerParam = wBytes / g.total;
   const routedPerExpert = g.moe ? (g.total - g.active) / Math.max(1, g.experts - g.perToken) : 0;
   const alwaysRead = g.active - g.perToken * routedPerExpert;
 
-  const stepSeconds = (b: number) => {
-    // MoE: a batch of b tokens touches more experts than one token does.
-    const touched = g.moe ? g.experts * (1 - Math.pow(1 - g.perToken / g.experts, b)) : 0;
+  // One forward step over `tokens` tokens of `b` sequences (more than b when speculative decoding verifies drafts).
+  const stepSeconds = (b: number, tokens = b) => {
+    // MoE: a batch of tokens touches more experts than one token does.
+    const touched = g.moe ? g.experts * (1 - Math.pow(1 - g.perToken / g.experts, tokens)) : 0;
     // The input embedding table is only looked up, not streamed (the output head is).
     const lookupOnly = g.embed > g.vocab * g.hidden ? g.vocab * g.hidden : 0;
     const paramsRead = (g.moe ? alwaysRead + touched * routedPerExpert : g.total) - lookupOnly;
     const weightTime = (paramsRead * bytesPerParam * (1 - offload)) / tp / bw;
     const kvTime = (kvSeq * b * kvShard(g, tp) * (1 - kvOffload)) / bw;
     const cpuTime = (paramsRead * bytesPerParam * offload + kvSeq * b * kvOffload) / (CPU_GBPS * 1e9);
-    const compute = (2 * g.active * b) / (flops * tp * 0.6);
-    const comm = 2 * g.layers * allReduce(b * g.hidden * 2, tp, tpLink);
-    const hops = (pp - 1) * allReduce(b * g.hidden * 2, 2, hopLink);
+    const compute = (2 * g.active * tokens) / (flops * tp * 0.6);
+    const comm = 2 * g.layers * allReduce(tokens * g.hidden * 2, tp, tpLink);
+    const hops = (pp - 1) * allReduce(tokens * g.hidden * 2, 2, hopLink);
     const fixed = (runtime.stepMs + (g.layers * (runtime.layerUs + (g.moe ? runtime.moeLayerUs : 0))) / 1000) / 1000;
     return Math.max(weightTime + kvTime, compute) + cpuTime + comm + hops + fixed;
   };
 
-  // Speculative decoding: expected tokens per verification step (Leviathan et al.), fading as batches grow.
-  const specGain = (b: number) => {
-    if (!input.enable_speculative_decoding) return 1;
+  // Speculative decoding: draft k tokens, then verify them in one step over k + 1 tokens per sequence; a step yields
+  // (1 − a^(k+1)) / (1 − a) tokens on average (Leviathan et al.). Large batches make verification compute-bound.
+  const draftSeconds =
+    draft.passes * (draft.read / tp / bw + (draft.layers * (runtime.layerUs + (g.moe ? runtime.moeLayerUs : 0))) / 1e6);
+  const speed = (b: number) => {
+    const plain = 1 / stepSeconds(b);
+    if (!spec) return plain;
     const a = Math.min(0.99, n(input.speculative_acceptance_rate, 0.7));
     const k = draftTokens;
-    // Checking k drafted tokens is not free (extra compute, KV reads, rejection sampling): about 3% of a step each.
+    // Checking drafts is not free beyond the step itself (rejection sampling, KV writes, scheduling): about 3% each.
     const VERIFY_COST = 0.03;
-    const gain = (1 - Math.pow(a, k + 1)) / (1 - a) / (1 + draft.cost + VERIFY_COST * k);
-    return 1 + (gain - 1) / (1 + b / 8);
+    const drafted = (1 - Math.pow(a, k + 1)) / (1 - a) / ((stepSeconds(b, b * (k + 1)) + draftSeconds) * (1 + VERIFY_COST * k));
+    // Measured gains shrink with batch size faster than this roofline does, as kernels don't overlap perfectly.
+    return plain * (1 + (drafted / plain - 1) / (1 + b / 8));
   };
 
-  const perUser = fits ? specGain(seqs) / stepSeconds(seqs) : null;
-  const single = fits ? specGain(1) / stepSeconds(1) : null;
+  const perUser = fits ? speed(seqs) : null;
+  const single = fits ? speed(1) : null;
 
   // Prefill: compute-bound for long prompts, weight-read-bound for short ones; FP8/FP4 tensor cores speed it up.
   const lowBits = (quant === "fp8" && gpu.fp8) || (/^(nvfp4|mxfp4)$/.test(quant) && gpu.fp4);
@@ -396,7 +425,7 @@ function inference(input: CalculatorInput, gpu: GpuSpec): CalculatorOutput {
   const prefillReads = (Math.ceil(seq / runtime.chunk) * wBytes) / tp / bw;
   const prefillComm =
     2 * g.layers * allReduce(Math.min(seq, runtime.chunk) * g.hidden * 2, tp, tpLink) * Math.ceil(seq / runtime.chunk);
-  const ttft = fits ? Math.max(prefillCompute, prefillReads) + prefillComm + 0.015 : null;
+  const ttft = fits ? Math.max(prefillCompute, prefillReads) + prefillComm + (runtime.ttftMs ?? 15) / 1000 : null;
 
   // ── KV capacity: how many more users fit
   const freeForKv = usableGpu - (weightsGpu + actGpu + scoresGpu + overheadGpu + draftGpu);
@@ -449,7 +478,7 @@ function inference(input: CalculatorInput, gpu: GpuSpec): CalculatorOutput {
 
 // ─── Fine-tuning ──────────────────────────────────────────────────────────────
 
-const TRAINERS: Record<string, { mfu: number; chunkedLoss: boolean; pureBf16: boolean; offloadCheckpoints: boolean }> = {
+export const TRAINERS: Record<string, { mfu: number; chunkedLoss: boolean; pureBf16: boolean; offloadCheckpoints: boolean }> = {
   unsloth: { mfu: 0.5, chunkedLoss: true, pureBf16: false, offloadCheckpoints: true },
   torchtune: { mfu: 0.42, chunkedLoss: true, pureBf16: true, offloadCheckpoints: false },
   hf_trainer: { mfu: 0.35, chunkedLoss: false, pureBf16: false, offloadCheckpoints: false },

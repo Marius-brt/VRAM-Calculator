@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If the calculator helps your work, please cite it."
+title: "VRAM Calculator: memory and speed estimates for LLM inference and fine-tuning"
+type: software
+authors:
+  - family-names: Brouty
+    given-names: Marius
+repository-code: "https://github.com/Marius-brt/VRAM-Calculator"
+url: "https://marius-brt.github.io/VRAM-Calculator/"

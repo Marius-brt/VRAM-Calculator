@@ -397,7 +397,7 @@ export function VramCalculatorApp({ initialModels, initialGpus }: VramCalculator
   };
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex flex-1 flex-col">
       <CalculatorHeader
         onOpenOptimizer={() => setOptimizerOpen(true)}
         onOpenFindModels={() => setFindModelsOpen(true)}
