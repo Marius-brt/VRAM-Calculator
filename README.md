@@ -1,84 +1,88 @@
 # VRAM Calculator
 
-How much GPU memory a model needs, how fast it runs, and how to split a set of models over your own machines.
-Everything runs in the browser: no account, no database, no server-side state.
+Check whether an LLM fits on your GPUs, how fast it will run, and get the command to launch it.
+
+**[Open the calculator](https://marius-brt.github.io/VRAM-Calculator/)** | [How the numbers are made](https://marius-brt.github.io/VRAM-Calculator/methodology)
+
+![Qwen3.8-27B in NVFP4 on one RTX 5090: memory breakdown, speed and the vLLM command to run it](docs/images/simple-view.png)
 
 ## What it does
 
-**Simple view**: one model on one kind of GPU.
+- **Fit and speed**: memory part by part, speed per user and in total, time to first token and how many users fit,
+  for 410 models on 125 GPUs from NVIDIA, AMD, Apple and Intel, or any model imported from Hugging Face.
+- **Launch command**: ready to paste for vLLM, SGLang, TensorRT-LLM, llama.cpp, Ollama, Transformers or TEI, with
+  speculative decoding, CPU offloading and KV cache precision.
+- **Fine-tuning**: full, LoRA and QLoRA, with ZeRO and offloading, and the Unsloth, TRL or torchtune command.
+- **Find models and Find hardware**: every model that fits your GPUs, or the cheapest GPUs that run a model.
+- **Several models on your machines**: the Advanced view places a set of models on a pool of nodes, picking precision,
+  tensor and pipeline parallelism and copies, with per-model speed targets.
 
-- Memory breakdown (weights, KV cache, activations, runtime overhead) and whether it fits.
-- Speed per user and in total, time to first token, users that fit at a given context, cost and power.
-- Copies: run several instances of the model on one machine's GPUs instead of one wide instance.
-- The command to run the setup: vLLM, SGLang, TensorRT-LLM, llama.cpp, Ollama, Transformers or TEI for serving,
-  Unsloth, TRL or torchtune for fine-tuning. It carries speculative decoding, CPU offloading, flash attention and
-  KV cache precision, and says what a runtime can't do instead of emitting a flag it doesn't have.
-- Charts for memory and speed against context length and users.
-- Inference and fine-tuning (full, LoRA, QLoRA, ZeRO 1–3, offloading), plus embedding and reranking models.
-- **Find models**: every catalog model that fits your hardware, at the best precision, sorted by popularity, release date, size or speed.
-- **Find hardware**: the cheapest GPU setups that meet a target speed.
+![The Advanced view placing Llama 3.1 8B and Qwen3 14B on two RTX 4090s](docs/images/advanced-view.png)
 
-**Advanced view**: a pool of nodes, each with its own GPUs and link, and the models you want to serve on it.
+Everything runs in your browser: no account, nothing stored on a server. Saved setups stay in your browser's storage.
 
-- The planner places each model, picks precision and tensor/pipeline parallel, and shows memory share per GPU,
-  KV cache space left, speed per user and the launch command for each copy.
-- Per-model targets (minimum speed per user, maximum time to first token) make it spend more GPUs where needed.
-- Idle GPUs go to tensor parallel 2 first, then to extra copies behind a load balancer.
-- Pin a model to a node, specific GPUs, a tensor parallel size or a number of copies; everything else stays automatic.
+## How accurate it is
 
-Setups, imported models and the pool are saved in `localStorage` only.
+Memory is counted part by part: weights, KV cache, activations, runtime overhead. Speed comes from the hardware: decoding
+is limited by memory bandwidth and reading a prompt by compute. How close each runtime gets to the hardware's peak is
+fitted to 123 published and contributed measurements, per GPU class.
 
-## How the numbers are made
+| On a GPU left out of the fit | Typical error |
+| --- | --- |
+| Decode speed | about 10% |
+| llama.cpp prompt processing | about 25% |
+| TensorRT-LLM time to first token | about 7% |
 
-[`src/lib/calculator/engine.ts`](src/lib/calculator/engine.ts) is a plain TypeScript model, used by the UI and the API:
+Very large MoE models are on the optimistic side, and SGLang and Transformers aren't checked against measurements yet.
+Every formula, constant and benchmark is on the [methodology page](https://marius-brt.github.io/VRAM-Calculator/methodology).
 
-- **Weights**: parameters × bits per weight for the chosen precision (GGUF formats use their whole-file average).
-- **KV cache**: per layer type, so sliding-window, linear-attention/state layers and MLA are counted as they are.
-- **Decode speed**: memory-bandwidth bound, with runtime efficiency, MoE expert reads that grow with batch size,
-  and per-step and per-layer overheads. Tensor parallel pays an all-reduce on its link; pipeline parallel pays a hop per stage.
-- **Prefill / time to first token**: compute bound, faster with FP8/FP4 tensor cores.
-- **Speculative decoding**: expected tokens per step from the acceptance rate (Leviathan et al.), against a verification
-  step over k + 1 tokens per sequence (MoE models touch more experts) plus the drafter's own passes and about 3% per
-  drafted token. Draft models, EAGLE-3 heads, MTP layers and DFlash drafters add memory; n-gram and suffix lookup don't.
-- **Runtimes** (vLLM, SGLang, TensorRT-LLM, llama.cpp, Ollama, Transformers) differ in memory reserve, overhead and efficiency.
+## Sources
 
-The speed constants of each runtime (bandwidth efficiency, per-layer overhead, prefill efficiency, fixed time to first
-token) are fitted to 123 published and contributed measurements in [`src/lib/data/benchmarks.json`](src/lib/data/benchmarks.json),
-per GPU class (vendor + consumer/workstation/datacenter) where there is enough data:
+**Data**
 
-- llama.cpp scoreboards for [CUDA](https://github.com/ggml-org/llama.cpp/discussions/15013),
+- Models: the [Hugging Face Hub API](https://huggingface.co/docs/hub/api) (each model's `config.json` and parameter
+  count), refreshed every week.
+- GPUs: vendor spec sheets for memory, bandwidth, tensor throughput and power, with rough cloud rental prices.
+- Speed measurements: the llama.cpp scoreboards for [CUDA](https://github.com/ggml-org/llama.cpp/discussions/15013),
   [ROCm](https://github.com/ggml-org/llama.cpp/discussions/15021) and
-  [Apple Silicon](https://github.com/ggml-org/llama.cpp/discussions/4167): Llama 2 7B, 45 GPUs and 3 Macs.
-- [NVIDIA NIM](https://docs.nvidia.com/nim/benchmarking/llm/1.0.0/performance.html) (TensorRT-LLM) single-request
-  latency for Llama 3.1 8B, and [SemiAnalysis InferenceX](https://github.com/SemiAnalysisAI/InferenceX) vLLM and
-  TensorRT-LLM decode for Llama 3.3 70B on H200, B200 and MI300X to MI355X.
-- Contributed `vllm bench serve` runs: Qwen3.8-Flash-Next NVFP4 with MTP on 2× RTX PRO 6000 Blackwell.
+  [Apple Silicon](https://github.com/ggml-org/llama.cpp/discussions/4167),
+  [NVIDIA NIM benchmarks](https://docs.nvidia.com/nim/benchmarking/llm/1.0.0/performance.html),
+  [SemiAnalysis InferenceX](https://github.com/SemiAnalysisAI/InferenceX) and contributed `vllm bench serve` runs.
+  All rows are in [`benchmarks.json`](src/lib/data/benchmarks.json) with their links.
 
-On GPUs left out of the fit, decode speed is typically within 10% and llama.cpp prompt processing within 25%.
-Runtimes without measurements here (SGLang, Transformers) keep typical values, and very large MoE models are on the
-optimistic side. The checks live in [`src/__tests__/calculator.test.mjs`](src/__tests__/calculator.test.mjs).
+**Methods**
 
-## Catalogs
+- Korthikanti et al., [Reducing Activation Recomputation in Large Transformer Models](https://arxiv.org/abs/2205.05198), 2022
+- Rajbhandari et al., [ZeRO: Memory Optimizations Toward Training Trillion Parameter Models](https://arxiv.org/abs/1910.02054), 2020
+- Hu et al., [LoRA](https://arxiv.org/abs/2106.09685), 2021, and Dettmers et al., [QLoRA](https://arxiv.org/abs/2305.14314), 2023
+- Dao et al., [FlashAttention](https://arxiv.org/abs/2205.14135), 2022, and Kwon et al., [PagedAttention](https://arxiv.org/abs/2309.06180), 2023
+- DeepSeek-AI, [DeepSeek-V2](https://arxiv.org/abs/2405.04434) (Multi-head Latent Attention) and [DeepSeek-V3](https://arxiv.org/abs/2412.19437) (multi-token prediction), 2024
+- Leviathan et al., [Fast Inference from Transformers via Speculative Decoding](https://arxiv.org/abs/2211.17192), 2023
+- Li et al., [EAGLE-3](https://arxiv.org/abs/2503.01840), 2025, and Chen et al., [DFlash](https://arxiv.org/abs/2602.06036), 2026
+- On predicting LLM speed: [LIFE](https://arxiv.org/abs/2508.00904) (Patwari et al., 2025), [WattGPU](https://arxiv.org/abs/2607.02391)
+  (2026), [GenZ](https://arxiv.org/abs/2406.01698) (Bambhaniya et al., 2024) and [Vidur](https://arxiv.org/abs/2405.05465) (Agrawal et al., 2024)
 
-Both are plain JSON in [`src/lib/data`](src/lib/data), generated by scripts:
+## Contribute a benchmark
+
+Measurements from real servers make the estimates better. With vLLM running, measure it with its own benchmark client
+(it only sends requests to the running server):
 
 ```bash
-python3 scripts/gpus.py
+vllm bench serve --base-url http://localhost:8000 --dataset-name random --random-input-len 1500 --random-output-len 500 --ignore-eos --num-prompts 120 --max-concurrency 12
 ```
 
-GPU table (memory, bandwidth, FP16 TFLOPS, FP8/FP4 support, power, rough rental price). Edit the table in the script and re-run.
+Open an issue with the result and your `vllm serve` command, or add a row to
+[`benchmarks.json`](src/lib/data/benchmarks.json), refit and check the error on GPUs the fit hasn't seen:
 
 ```bash
-bun scripts/build-catalog.ts
+bun scripts/fit-speed.ts --write
 ```
 
-Models from Hugging Face: `config.json` for the architecture, the model API for parameter count, release date and downloads.
-Set `HF_TOKEN` to read gated repos directly instead of through public mirrors. The script refuses to shrink the catalog
-by more than 20% (Hugging Face rate limits); pass `--force` to overwrite anyway.
+```bash
+bun scripts/fit-speed.ts --cv
+```
 
-Any other Hugging Face model can be imported from the model picker; the browser fetches its config directly.
-
-## Development
+## Run it locally
 
 ```bash
 bun install
@@ -92,36 +96,33 @@ bun run dev
 bun test
 ```
 
-```bash
-bun run build
-```
+The engine is plain TypeScript in [`src/lib/calculator`](src/lib/calculator). The catalogs are JSON in
+[`src/lib/data`](src/lib/data), rebuilt by two scripts:
 
-After adding rows to `src/lib/data/benchmarks.json`, refit the speed constants and check the error on GPUs the fit
-hasn't seen:
+- `python3 scripts/gpus.py` writes the GPU table; edit it in the script.
+- `bun scripts/build-catalog.ts` rebuilds the models from Hugging Face. Set `HF_TOKEN` to read gated repos directly.
+  It refuses to shrink the catalog by more than 20% (rate limits); `--force` overwrites anyway.
 
-```bash
-bun scripts/fit-speed.ts --write
-```
+<details>
+<summary>Deploy to GitHub Pages</summary>
 
-```bash
-bun scripts/fit-speed.ts --cv
-```
-
-## Deploy to GitHub Pages
-
-The site is fully static, so [`.github/workflows/pages.yml`](.github/workflows/pages.yml) builds it with
-`PAGES_BASE_PATH` set (Next static export under `/<repo>`) and publishes it. It runs on every push to `main`, every
-Monday to refresh the model catalog from Hugging Face, and on demand from the Actions tab.
+The site is fully static. [`.github/workflows/pages.yml`](.github/workflows/pages.yml) builds it as a Next static
+export under `/<repo>` and publishes it on every push to `main`, every Monday (to refresh the model catalog) and on
+demand from the Actions tab.
 
 1. In the repository settings, under Pages, set the source to GitHub Actions.
 2. Optional: add an `HF_TOKEN` repository secret (a read token) for higher Hugging Face rate limits.
 
-If the weekly refresh is throttled, the build keeps the committed catalog. The API below needs a server, so it is
-left out of the Pages build. GitHub pauses scheduled workflows after 60 days without commits to a public repository.
+If the weekly refresh is throttled, the build keeps the committed catalog. GitHub pauses scheduled workflows after
+60 days without commits to a public repository.
 
-## API
+</details>
 
-Stateless routes over the same engine and catalogs.
+<details>
+<summary>HTTP API (self-hosted only)</summary>
+
+`bun run dev` or `bun run start` also serves stateless routes over the same engine and catalogs. They need a server,
+so the GitHub Pages build leaves them out.
 
 | Route | What it returns |
 | --- | --- |
@@ -133,3 +134,21 @@ Stateless routes over the same engine and catalogs.
 ```bash
 curl -s localhost:3000/api/v1/calculate -H 'content-type: application/json' -d "{\"calc_mode\":\"inference\",\"gpu_key\":\"4090_24\",\"quantization\":\"q4_k_m\",\"seq_length\":8192,\"num_gpus\":1,\"framework_preset\":\"llama_cpp\",\"model_variant\":$(curl -s 'localhost:3000/api/models?q=llama-3.1-8b-instruct' | jq '.[0]')}"
 ```
+
+</details>
+
+## Cite
+
+If the calculator helps your work, please cite it. GitHub's "Cite this repository" button reads
+[`CITATION.cff`](CITATION.cff).
+
+```bibtex
+@software{brouty_vram_calculator_2026,
+  author = {Brouty, Marius},
+  title  = {VRAM Calculator: memory and speed estimates for LLM inference and fine-tuning},
+  year   = {2026},
+  url    = {https://github.com/Marius-brt/VRAM-Calculator}
+}
+```
+
+Made by [Marius Brouty](https://github.com/Marius-brt).
