@@ -27,11 +27,11 @@ export function Section({
   className?: string;
 }) {
   return (
-    <section className={cn("space-y-4 border-t px-5 py-5 first:border-t-0", className)}>
+    <section className={cn("space-y-4 border-t px-4 py-5 first:border-t-0 sm:px-5", className)}>
       {(title || action) && (
         <div className="flex min-h-7 flex-wrap items-center justify-between gap-x-3 gap-y-2">
           <h2 className="text-sm font-semibold text-heading">{title}</h2>
-          {action && <div className="flex items-center gap-1">{action}</div>}
+          {action && <div className="flex flex-wrap items-center gap-1">{action}</div>}
         </div>
       )}
       {children}
@@ -69,7 +69,7 @@ export function Select({ className, children, ...props }: React.SelectHTMLAttrib
     <div className="relative">
       <select
         className={cn(
-          "h-9 w-full appearance-none truncate rounded-md border border-input bg-secondary pl-3 pr-8 text-sm text-heading transition-colors hover:border-muted-foreground/60",
+          "h-9 w-full appearance-none truncate rounded-md border border-input bg-secondary pl-3 pr-8 text-base text-heading md:text-sm transition-colors hover:border-muted-foreground/60",
           className,
         )}
         {...props}
@@ -218,7 +218,7 @@ export function Stepper({
         max={max}
         value={value}
         onChange={(e) => set(Number(e.target.value))}
-        className="h-full w-11 border-x border-input bg-transparent text-center text-sm tabular-nums text-heading [appearance:textfield] focus-visible:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+        className="h-full w-11 border-x border-input bg-transparent text-center text-base tabular-nums md:text-sm text-heading [appearance:textfield] focus-visible:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
       />
       <button
         type="button"
@@ -397,7 +397,7 @@ export function Picker<T>({
                 onChange={(e) => onQueryChange(e.target.value)}
                 onKeyDown={onKeyDown}
                 placeholder={placeholder}
-                className="h-9 w-full rounded-md bg-secondary pl-8 pr-3 text-sm text-heading placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-0"
+                className="h-9 w-full rounded-md bg-secondary pl-8 pr-3 text-base text-heading md:text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-0"
               />
             </div>
             {toolbar}
