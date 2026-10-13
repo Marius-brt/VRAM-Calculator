@@ -1,4 +1,4 @@
-# LLM VRAM Calculator
+# VRAM Calculator
 
 How much GPU memory a model needs, how fast it runs, and how to split a set of models over your own machines.
 Everything runs in the browser: no account, no database, no server-side state.

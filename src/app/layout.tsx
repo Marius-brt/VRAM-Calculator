@@ -9,9 +9,9 @@ const plex = IBM_Plex_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "LLM VRAM Calculator",
+  title: "VRAM Calculator",
   description:
-    "Check whether an LLM fits on your GPU and how fast it runs. 142 GPUs from NVIDIA, AMD, Apple and Intel, plus multi-GPU clusters and fine-tuning.",
+    "Check whether an LLM fits on your GPU and how fast it runs, on NVIDIA, AMD, Apple and Intel hardware, multi-GPU clusters and fine-tuning.",
 };
 
 export default function RootLayout({

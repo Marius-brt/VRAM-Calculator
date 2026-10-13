@@ -56,7 +56,7 @@ export function CalculatorHeader({
     <header className="sticky top-0 z-40 border-b bg-background/85 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-[1320px] items-center gap-0.5 px-4 sm:gap-2 sm:px-6">
         <h1 className="hidden min-w-0 truncate pr-2 text-[15px] font-semibold text-heading sm:block">
-          <span className="hidden md:inline">LLM </span>VRAM Calculator
+          VRAM Calculator
         </h1>
         <Segmented
           label="View"
