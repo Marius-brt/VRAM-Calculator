@@ -66,6 +66,16 @@ export function ModelPicker({
       query={query}
       onQueryChange={setQuery}
       placeholder={`Search ${models.length} models, e.g. Llama 70B, Qwen, bge`}
+      footer={
+        onOpenHfImport && (
+          <>
+            Not listed?{" "}
+            <button type="button" onClick={onOpenHfImport} className="text-link underline-offset-2 hover:underline">
+              Import from Hugging Face
+            </button>
+          </>
+        )
+      }
       emptyState={
         <>
           No model matches.{" "}
@@ -104,9 +114,17 @@ interface ModelSelectorProps {
   onSelectModel: (model: ModelVariant) => void;
   onOpenCustomize: () => void;
   onOpenHfImport: () => void;
+  onOpenFindModels: () => void;
 }
 
-export function ModelSelector({ models, selectedModel, onSelectModel, onOpenCustomize, onOpenHfImport }: ModelSelectorProps) {
+export function ModelSelector({
+  models,
+  selectedModel,
+  onSelectModel,
+  onOpenCustomize,
+  onOpenHfImport,
+  onOpenFindModels,
+}: ModelSelectorProps) {
   const m = selectedModel;
   const kvHeads = m.num_key_value_heads || m.num_attention_heads || 32;
   const attention = (m.attention_structure || (kvHeads < (m.num_attention_heads || 32) ? "GQA" : "MHA")).toUpperCase();
@@ -116,11 +134,11 @@ export function ModelSelector({ models, selectedModel, onSelectModel, onOpenCust
       title="Model"
       action={
         <>
+          <Button variant="ghost" size="xs" onClick={onOpenFindModels}>
+            Find models
+          </Button>
           <Button variant="ghost" size="xs" onClick={onOpenCustomize}>
             Edit specs
-          </Button>
-          <Button variant="ghost" size="xs" onClick={onOpenHfImport}>
-            Import from Hugging Face
           </Button>
         </>
       }

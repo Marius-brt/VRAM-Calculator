@@ -4,6 +4,7 @@ import React from "react";
 import { ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import type { ModelTask, SpecMethod } from "@/lib/calculator/types";
+import { Button } from "@/components/ui/button";
 import { Field, Section, Segmented, Select, StepSlider, ToggleRow, formatTokens } from "./controls";
 
 /** 512 to 128K, then doubling up to the model's own context window (1M, 10M, ...). */
@@ -65,6 +66,8 @@ export const SPEC_METHODS: Record<SpecMethod, { label: string; tokens: number; a
 const pct = (n: number) => `${n}%`;
 
 interface ParameterInputsProps {
+  /** Opens the quantization guide (memory saved and quality cost of each format). */
+  onOpenScorecard: () => void;
   calcMode: "inference" | "finetuning";
   modelContext: number;
   task?: ModelTask;
@@ -134,7 +137,14 @@ export function ParameterInputs(p: ParameterInputsProps) {
   return (
     <>
       {inference ? (
-        <Section title="Precision">
+        <Section
+          title="Precision"
+          action={
+            <Button variant="ghost" size="xs" onClick={p.onOpenScorecard}>
+              Compare formats
+            </Button>
+          }
+        >
           <div className={encoder ? "grid gap-3" : "grid gap-3 sm:grid-cols-[1.4fr_1fr]"}>
             <Field label="Model weights">
               <Select value={p.quantization} onChange={(e) => p.setQuantization(e.target.value)}>

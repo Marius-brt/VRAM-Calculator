@@ -2,7 +2,7 @@
 
 Check whether an LLM fits on your GPUs, how fast it will run, and get the command to launch it.
 
-**[Open the calculator](https://marius-brt.github.io/VRAM-Calculator/)** | [How the numbers are made](https://marius-brt.github.io/VRAM-Calculator/methodology)
+**[Open the calculator](https://vram-calculator.mariusbrt.com/)** | [How the numbers are made](https://vram-calculator.mariusbrt.com/methodology)
 
 ![Qwen3.8-27B in NVFP4 on one RTX 5090: memory breakdown, speed and the vLLM command to run it](docs/images/simple-view.png)
 
@@ -34,7 +34,7 @@ fitted to 123 published and contributed measurements, per GPU class.
 | TensorRT-LLM time to first token | about 7% |
 
 Very large MoE models are on the optimistic side, and SGLang and Transformers aren't checked against measurements yet.
-Every formula, constant and benchmark is on the [methodology page](https://marius-brt.github.io/VRAM-Calculator/methodology).
+Every formula, constant and benchmark is on the [methodology page](https://vram-calculator.mariusbrt.com/methodology).
 
 ## Sources
 
@@ -64,15 +64,22 @@ Every formula, constant and benchmark is on the [methodology page](https://mariu
 
 ## Contribute a benchmark
 
-Measurements from real servers make the estimates better. With vLLM running, measure it with its own benchmark client
-(it only sends requests to the running server):
+Measurements from real servers make the estimates better. On the machine that serves the model, run the benchmark
+script. It measures a running vLLM server, or a GGUF file with llama-bench, and writes a `report.md`:
 
 ```bash
-vllm bench serve --base-url http://localhost:8000 --dataset-name random --random-input-len 1500 --random-output-len 500 --ignore-eos --num-prompts 120 --max-concurrency 12
+curl -fsSLO https://raw.githubusercontent.com/Marius-brt/VRAM-Calculator/main/scripts/benchmark.sh
 ```
 
-Open an issue with the result and your `vllm serve` command, or add a row to
-[`benchmarks.json`](src/lib/data/benchmarks.json), refit and check the error on GPUs the fit hasn't seen:
+```bash
+bash benchmark.sh --docker <container> --users 12
+```
+
+Leave out `--docker` when vLLM runs directly on the machine; `bash benchmark.sh --help` lists the options. Then paste the
+report into a [benchmark issue](https://github.com/Marius-brt/VRAM-Calculator/issues/new?template=benchmark.yml).
+
+Maintainers add the rows to [`benchmarks.json`](src/lib/data/benchmarks.json), refit and check the error on GPUs the
+fit hasn't seen:
 
 ```bash
 bun scripts/fit-speed.ts --write
@@ -151,4 +158,4 @@ If the calculator helps your work, please cite it. GitHub's "Cite this repositor
 }
 ```
 
-Made by [Marius Brouty](https://github.com/Marius-brt).
+Made by [Marius Brouty](https://mariusbrt.com).

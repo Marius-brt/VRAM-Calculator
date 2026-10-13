@@ -4,6 +4,7 @@ import React, { useMemo, useState } from "react";
 import { GpuSpec } from "@/lib/calculator/types";
 import { GPU_LINK_OPTIONS, NETWORK_OPTIONS } from "@/lib/calculator/engine";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Chips, Field, Picker, Section, Segmented, Select, Specs, Stepper, matchesQuery } from "./controls";
 
 const VENDORS = [
@@ -115,6 +116,8 @@ export function GpuPicker({
 const MAX_RIG_GPUS = 16;
 
 interface GpuSelectorProps {
+  /** Opens the search over every GPU in the catalog for the current model. */
+  onOpenFindHardware: () => void;
   gpus: GpuSpec[];
   currentGpu: GpuSpec;
   selectedGpuKey: string;
@@ -191,15 +194,20 @@ export function GpuSelector(props: GpuSelectorProps) {
     <Section
       title="Hardware"
       action={
-        <Segmented
-          label="Topology"
-          value={isCluster ? "cluster" : "single"}
-          onChange={(v) => switchTopology(v === "cluster")}
-          options={[
-            { value: "single", label: "One machine" },
-            { value: "cluster", label: "Cluster" },
-          ]}
-        />
+        <>
+          <Button variant="ghost" size="xs" onClick={props.onOpenFindHardware}>
+            Find hardware
+          </Button>
+          <Segmented
+            label="Topology"
+            value={isCluster ? "cluster" : "single"}
+            onChange={(v) => switchTopology(v === "cluster")}
+            options={[
+              { value: "single", label: "One machine" },
+              { value: "cluster", label: "Cluster" },
+            ]}
+          />
+        </>
       }
     >
       <GpuPicker gpus={gpus} currentGpu={currentGpu} onSelect={onSelectGpuKey} />
@@ -254,7 +262,10 @@ export function GpuSelector(props: GpuSelectorProps) {
       )}
 
       {!isCluster && copies != null && numGpus > 1 && (
-        <Field label="Copies of the model" hint="More copies serve more users at once; fewer, wider copies answer each user faster.">
+        <Field
+          label="Copies of the model"
+          hint="More copies serve more users at once; fewer, wider copies answer each user faster."
+        >
           <Select value={copies} onChange={(e) => setCopies(Number(e.target.value))}>
             {divisors.map((d) => (
               <option key={d} value={d}>

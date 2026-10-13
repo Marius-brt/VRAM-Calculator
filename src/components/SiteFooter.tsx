@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Github } from "lucide-react";
 
 export const REPO_URL = "https://github.com/Marius-brt/VRAM-Calculator";
-export const AUTHOR = { name: "Marius Brouty", url: "https://github.com/Marius-brt" };
+export const AUTHOR = { name: "Marius Brouty", url: "https://mariusbrt.com" };
 
 export function SiteFooter() {
   return (

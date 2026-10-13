@@ -2,44 +2,28 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { BarChart2, BookOpen, Bookmark, Boxes, Check, Download, Github, Link2, Moon, Search, Sun } from "lucide-react";
-import { REPO_URL } from "@/components/SiteFooter";
+import { Bookmark, Check, Link2, Moon, Sun } from "lucide-react";
 import { Segmented } from "./controls";
 import type { View } from "./VramCalculatorApp";
 
 interface CalculatorHeaderProps {
-  onOpenOptimizer: () => void;
-  onOpenFindModels: () => void;
-  onOpenScorecard: () => void;
   onOpenSavedConfigs: () => void;
-  onExport: (format: "json" | "csv") => void;
   isDark: boolean;
   setIsDark: (dark: boolean) => void;
   view: View;
   setView: (view: View) => void;
 }
 
-function HeaderButton({ icon: Icon, label, onClick }: { icon: typeof Search; label: string; onClick: () => void }) {
+function HeaderButton({ icon: Icon, label, onClick }: { icon: typeof Bookmark; label: string; onClick: () => void }) {
   return (
-    <Button variant="ghost" size="sm" onClick={onClick} title={label} className="gap-1.5 px-2 text-[13px] xl:px-2.5">
+    <Button variant="ghost" size="sm" onClick={onClick} title={label} className="gap-1.5 px-2 text-[13px] md:px-2.5">
       <Icon />
-      <span className="sr-only xl:not-sr-only">{label}</span>
+      <span className="sr-only md:not-sr-only">{label}</span>
     </Button>
   );
 }
 
-export function CalculatorHeader({
-  onOpenOptimizer,
-  onOpenFindModels,
-  onOpenScorecard,
-  onOpenSavedConfigs,
-  onExport,
-  isDark,
-  setIsDark,
-  view,
-  setView,
-}: CalculatorHeaderProps) {
+export function CalculatorHeader({ onOpenSavedConfigs, isDark, setIsDark, view, setView }: CalculatorHeaderProps) {
   const simple = view === "simple";
   const [copied, setCopied] = useState(false);
 
@@ -68,37 +52,10 @@ export function CalculatorHeader({
             { value: "advanced", label: "Advanced" },
           ]}
         />
-        {simple && <HeaderButton icon={Boxes} label="Find models" onClick={onOpenFindModels} />}
-        {simple && <HeaderButton icon={Search} label="Find hardware" onClick={onOpenOptimizer} />}
-        {simple && <HeaderButton icon={BarChart2} label="Quantization guide" onClick={onOpenScorecard} />}
         <HeaderButton icon={Bookmark} label="Saved setups" onClick={onOpenSavedConfigs} />
         {simple && (
           <HeaderButton icon={copied ? Check : Link2} label={copied ? "Link copied" : "Copy link"} onClick={handleShare} />
         )}
-        {simple && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="hidden h-8 w-8 sm:inline-flex"
-            onClick={() => onExport("json")}
-            title="Export as JSON"
-            aria-label="Export as JSON"
-          >
-            <Download />
-          </Button>
-        )}
-        {/* On phones these two live in the footer; the header row is full. */}
-        <Button variant="ghost" size="sm" asChild className="hidden gap-1.5 px-2 text-[13px] sm:inline-flex xl:px-2.5">
-          <Link href="/methodology" title="Methodology">
-            <BookOpen />
-            <span className="sr-only xl:not-sr-only">Methodology</span>
-          </Link>
-        </Button>
-        <Button variant="ghost" size="icon" asChild className="hidden h-8 w-8 sm:inline-flex">
-          <a href={REPO_URL} title="Source code on GitHub" aria-label="Source code on GitHub">
-            <Github />
-          </a>
-        </Button>
         <Button
           variant="ghost"
           size="icon"

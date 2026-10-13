@@ -305,6 +305,7 @@ export function Picker<T>({
   placeholder,
   toolbar,
   emptyState,
+  footer,
 }: {
   groups: PickerGroup<T>[];
   getKey: (item: T) => string;
@@ -317,6 +318,8 @@ export function Picker<T>({
   placeholder: string;
   toolbar?: React.ReactNode;
   emptyState?: React.ReactNode;
+  /** Shown under the list, e.g. a way to add what isn't listed. */
+  footer?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
@@ -441,6 +444,7 @@ export function Picker<T>({
               )
             )}
           </div>
+          {footer && <div className="border-t px-3 py-2 text-[13px] text-muted-foreground">{footer}</div>}
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>

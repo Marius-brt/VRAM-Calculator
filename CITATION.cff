@@ -5,5 +5,6 @@ type: software
 authors:
   - family-names: Brouty
     given-names: Marius
+    website: "https://mariusbrt.com"
 repository-code: "https://github.com/Marius-brt/VRAM-Calculator"
-url: "https://marius-brt.github.io/VRAM-Calculator/"
+url: "https://vram-calculator.mariusbrt.com/"

@@ -632,6 +632,11 @@ export default function MethodologyPage() {
             H100 is predicted about 2× too fast, the L40 about 2.4× too slow), very large MoE models are on the optimistic side,
             and speeds for SGLang and Transformers are not checked against measurements yet.
           </p>
+          <p>
+            Measurements from more hardware make the fit better. The <A href={code("scripts/benchmark.sh")}>benchmark script</A>{" "}
+            measures a running vLLM server or a GGUF file with llama-bench and writes a report to paste into a{" "}
+            <A href={`${REPO_URL}/issues/new?template=benchmark.yml`}>benchmark issue</A>.
+          </p>
 
           <H2 id="finetuning">Fine-tuning</H2>
           <H3>Memory</H3>

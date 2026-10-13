@@ -43,9 +43,11 @@ interface SavedConfigsModalProps {
   onClose: () => void;
   current: { kind: SetupKind; config: any };
   onLoad: (setup: SavedSetup) => void;
+  /** Downloads the current setup and its results as JSON. */
+  onDownload?: () => void;
 }
 
-export function SavedConfigsModal({ open, onClose, current, onLoad }: SavedConfigsModalProps) {
+export function SavedConfigsModal({ open, onClose, current, onLoad, onDownload }: SavedConfigsModalProps) {
   const [setups, setSetups] = useState<SavedSetup[]>([]);
   const [name, setName] = useState("");
   const [notes, setNotes] = useState("");
@@ -112,9 +114,16 @@ export function SavedConfigsModal({ open, onClose, current, onLoad }: SavedConfi
             <span className="text-xs text-muted-foreground">
               Saves the current {KIND_LABELS[current.kind].toLowerCase()} setup.
             </span>
-            <Button type="submit" size="sm" disabled={!name.trim()}>
-              Save current setup
-            </Button>
+            <div className="flex items-center gap-2">
+              {onDownload && (
+                <Button type="button" variant="ghost" size="sm" onClick={onDownload}>
+                  Download JSON
+                </Button>
+              )}
+              <Button type="submit" size="sm" disabled={!name.trim()}>
+                Save current setup
+              </Button>
+            </div>
           </div>
           {error && <p className="text-[13px] text-danger">{error}</p>}
         </form>

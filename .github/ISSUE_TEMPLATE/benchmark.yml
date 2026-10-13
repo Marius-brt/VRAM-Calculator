@@ -1,0 +1,63 @@
+name: Benchmark results
+description: Share speeds measured on your hardware so the calculator's estimates get checked and fitted against them.
+title: "[Benchmark] <model> on <GPUs>"
+labels: ["benchmark"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for measuring. On the machine that serves the model, download the script and run it:
+
+        ```bash
+        curl -fsSLO https://raw.githubusercontent.com/Marius-brt/VRAM-Calculator/main/scripts/benchmark.sh
+        bash benchmark.sh --help
+        ```
+
+        It benchmarks a running vLLM server (`--docker <container>` if it runs in Docker) or a GGUF file with
+        llama-bench (`--gguf model.gguf`), then writes `report.md`. Results from `vllm bench serve` or `llama-bench`
+        run by hand are welcome too.
+  - type: input
+    id: gpus
+    attributes:
+      label: GPUs
+      description: Model and how many, e.g. 2× RTX PRO 6000 Blackwell (PCIe)
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: Model and precision
+      description: Hugging Face id and weight format, e.g. Qwen/Qwen3.8-Flash-Next in NVFP4
+    validations:
+      required: true
+  - type: dropdown
+    id: runtime
+    attributes:
+      label: Runtime
+      options:
+        - vLLM
+        - SGLang
+        - TensorRT-LLM
+        - llama.cpp
+        - Ollama
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: Results
+      description: Paste report.md from the script, or the benchmark output and your launch command.
+    validations:
+      required: true
+  - type: checkboxes
+    id: conditions
+    attributes:
+      label: Conditions
+      options:
+        - label: Nothing else was using these GPUs during the run.
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Anything unusual, e.g. a power limit, a custom kernel, or what the calculator predicted for this setup.

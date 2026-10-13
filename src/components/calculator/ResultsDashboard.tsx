@@ -1,6 +1,8 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
+import { REPO_URL } from "@/components/SiteFooter";
 import { CalculatorOutput } from "@/lib/calculator/types";
 import { cn } from "@/lib/utils";
 import { Num, Section } from "./controls";
@@ -268,6 +270,19 @@ export function ResultsDashboard({ output, calcMode, hardwareLabel, users, chart
         )}
         {!encoder && over && (calcMode === "inference" ? output.estimated_latency_tps : output.training_tps) == null && (
           <p className="text-xs text-muted-foreground">Speed is only estimated for setups that fit in memory.</p>
+        )}
+        {!encoder && calcMode === "inference" && output.estimated_latency_tps != null && (
+          <p className="text-xs text-muted-foreground">
+            Estimates{" "}
+            <Link href="/methodology#calibration" className="text-link underline-offset-2 hover:underline">
+              fitted to published benchmarks
+            </Link>
+            . Measured your own setup?{" "}
+            <a href={`${REPO_URL}/issues/new?template=benchmark.yml`} className="text-link underline-offset-2 hover:underline">
+              Share the numbers
+            </a>{" "}
+            to make them more accurate.
+          </p>
         )}
       </Section>
 

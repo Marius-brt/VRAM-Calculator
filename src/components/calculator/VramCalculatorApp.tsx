@@ -362,48 +362,19 @@ export function VramCalculatorApp({ initialModels, initialGpus }: VramCalculator
     }
   };
 
-  // Handle Export
-  const handleExport = (format: "json" | "csv") => {
+  const downloadJson = () => {
     if (!output) return;
-
-    if (format === "json") {
-      const blob = new Blob([JSON.stringify({ input: currentInput, output }, null, 2)], {
-        type: "application/json",
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `vram-calc-${selectedModel.name}-${currentGpu.label}.json`;
-      a.click();
-    } else {
-      let csv = "Metric,Value\n";
-      csv += `Model,${selectedModel.name}\n`;
-      csv += `Hardware,${totalGpus}x ${currentGpu.label}\n`;
-      csv += `VRAM Usage (GB),${output.vram_usage}\n`;
-      csv += `Total Memory (GB),${output.total_gpu_memory}\n`;
-      csv += `Utilization (%),${output.actual_vram_percentage}%\n`;
-      csv += `Status,${output.memory_status}\n`;
-      csv += `Tokens/sec,${output.estimated_latency_tps}\n`;
-      csv += `TTFT (ms),${output.ttft_ms}\n`;
-      csv += `Hourly Cost ($),${output.hourly_cost_usd}\n`;
-
-      const blob = new Blob([csv], { type: "text/csv" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `vram-calc-${selectedModel.name}-${currentGpu.label}.csv`;
-      a.click();
-    }
+    const blob = new Blob([JSON.stringify({ input: currentInput, output }, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `vram-calc-${selectedModel.name}-${currentGpu.label}.json`;
+    a.click();
   };
 
   return (
     <div className="flex flex-1 flex-col">
       <CalculatorHeader
-        onOpenOptimizer={() => setOptimizerOpen(true)}
-        onOpenFindModels={() => setFindModelsOpen(true)}
-        onOpenScorecard={() => setScorecardOpen(true)}
         onOpenSavedConfigs={() => setSavedConfigsOpen(true)}
-        onExport={handleExport}
         isDark={isDark}
         setIsDark={setIsDark}
         view={view}
@@ -441,9 +412,11 @@ export function VramCalculatorApp({ initialModels, initialGpus }: VramCalculator
                 onSelectModel={selectModel}
                 onOpenCustomize={() => setCustomizeOpen(true)}
                 onOpenHfImport={() => setHfImportOpen(true)}
+                onOpenFindModels={() => setFindModelsOpen(true)}
               />
 
               <GpuSelector
+                onOpenFindHardware={() => setOptimizerOpen(true)}
                 gpus={gpus}
                 currentGpu={currentGpu}
                 selectedGpuKey={selectedGpuKey}
@@ -475,6 +448,7 @@ export function VramCalculatorApp({ initialModels, initialGpus }: VramCalculator
               />
 
               <ParameterInputs
+                onOpenScorecard={() => setScorecardOpen(true)}
                 calcMode={calcMode}
                 modelContext={selectedModel.context_length || 4096}
                 task={selectedModel.task}
@@ -623,6 +597,7 @@ export function VramCalculatorApp({ initialModels, initialGpus }: VramCalculator
         onClose={() => setSavedConfigsOpen(false)}
         current={view === "advanced" ? { kind: "pool", config: pool } : { kind: calcMode, config: currentInput }}
         onLoad={loadSetup}
+        onDownload={view === "simple" ? downloadJson : undefined}
       />
     </div>
   );
