@@ -77,7 +77,7 @@ const ENCODERS: Record<string, ModelTask> = {
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const get = async (url: string) => {
   for (let attempt = 0; attempt < 5; attempt++) {
-    const res = await fetch(url, { headers }).catch(() => null);
+    const res = await fetch(url, { headers, signal: AbortSignal.timeout(30_000) }).catch(() => null);
     if (res?.ok) return res.json();
     if (res && res.status !== 429 && res.status < 500) return null;
     await sleep((res?.status === 429 ? 10_000 : 2_000) * (attempt + 1)); // back off harder on rate limits
@@ -128,7 +128,8 @@ async function pool<T, R>(items: T[], size: number, fn: (item: T) => Promise<R>)
   return out;
 }
 
-const discovered = (await pool(CHAT_ORGS, 1, discover)).flat();
+// Listing an org can take seconds, so a few go at once.
+const discovered = (await pool(CHAT_ORGS, 4, discover)).flat();
 const chat = [...new Set([...CLASSICS, ...discovered])].filter((r) => !(r in ENCODERS));
 console.log(`${chat.length} chat models, ${Object.keys(ENCODERS).length} embedding/reranking models`);
 

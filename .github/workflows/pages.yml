@@ -29,6 +29,8 @@ jobs:
       - name: Refresh the model catalog from Hugging Face
         # Throttled or incomplete fetches exit non-zero; the committed catalog is used instead.
         continue-on-error: true
+        # A slow Hugging Face shouldn't hold the deploy; past this, the committed catalog is used.
+        timeout-minutes: 10
         run: bun scripts/build-catalog.ts
         env:
           # Optional repository secret: higher rate limits and gated configs read directly.
