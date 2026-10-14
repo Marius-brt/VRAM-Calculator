@@ -34,6 +34,21 @@ export const PROVIDERS: Record<string, string> = {
   "arcee-ai": "Arcee",
   NousResearch: "Nous Research",
   "swiss-ai": "Swiss AI",
+  "LGAI-EXAONE": "LG AI Research",
+  upstage: "Upstage",
+  "ByteDance-Seed": "ByteDance",
+  ai21labs: "AI21 Labs",
+  "meituan-longcat": "Meituan",
+  kakaocorp: "Kakao",
+  "naver-hyperclovax": "NAVER",
+  sarvamai: "Sarvam AI",
+  "utter-project": "EuroLLM",
+  speakleash: "SpeakLeash",
+  stabilityai: "Stability AI",
+  bigcode: "BigCode",
+  Unbabel: "Unbabel",
+  Skywork: "Skywork",
+  thinkingmachines: "Thinking Machines",
   // Embedding and reranking model publishers.
   BAAI: "BAAI",
   "Alibaba-NLP": "Alibaba",
@@ -74,8 +89,9 @@ function stateBytes(cfg: any, hidden: number) {
  * `info` is the model's API record (parameter count, dates, popularity), when available.
  */
 export function specFromConfig(repoId: string, raw: any, info: HfInfo = {}): ModelVariant {
-  // Multimodal models (Qwen3.5+, Llama 4, Gemma 3...) keep the language model under text_config.
-  const cfg = { ...raw, ...(raw.text_config ?? raw.llm_config ?? raw.language_config ?? {}) };
+  // Multimodal models (Qwen3.5+, Llama 4, Gemma 3...) keep the language model under text_config; omni models
+  // (Qwen3-Omni) one level deeper, in the "thinker" that reads the inputs.
+  const cfg = { ...raw, ...(raw.thinker_config?.text_config ?? raw.text_config ?? raw.llm_config ?? raw.language_config ?? {}) };
   const [org, name = repoId] = repoId.split("/");
 
   const hidden = cfg.hidden_size || cfg.d_model || cfg.n_embd || cfg.dim || 4096;

@@ -25,6 +25,7 @@ import {
   WEIGHT_QUANTS,
   WeightOptions,
   contextSteps,
+  countSteps,
   encoderSteps,
   options,
 } from "./ParameterInputs";
@@ -43,7 +44,9 @@ const SERVING_DEFAULTS: ServingOptions = {
   speculative_draft_model_params: 1.5,
   speculative_acceptance_rate: 0.7,
 };
-const USER_STEPS = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512];
+const USER_STEPS = countSteps(2048);
+/** A list of choices that always includes the current value (a shared link or the API can set any number). */
+const withValue = (steps: number[], value: number) => [...new Set([...steps, value])].sort((a, b) => a - b);
 
 const newId = () => Math.random().toString(36).slice(2, 9);
 /** The memory that grows with load: KV cache for chat models, the batch's activations for embedding and reranking models. */
@@ -522,7 +525,7 @@ export function PoolPlanner({ gpus, models, pool, setPool, onOpenHfImport }: Poo
               <div className="grid grid-cols-3 gap-2">
                 <Field label={isEncoderTask(m.model) ? "Input length" : "Context"}>
                   <Select value={m.contextLength} onChange={(e) => updateModel(m.id, { contextLength: Number(e.target.value) })}>
-                    {contextOptions(m.model).map((s) => (
+                    {withValue(contextOptions(m.model), m.contextLength).map((s) => (
                       <option key={s} value={s}>
                         {formatTokens(s)}
                       </option>
@@ -531,7 +534,7 @@ export function PoolPlanner({ gpus, models, pool, setPool, onOpenHfImport }: Poo
                 </Field>
                 <Field label={isEncoderTask(m.model) ? "Batch" : "Users"}>
                   <Select value={m.users} onChange={(e) => updateModel(m.id, { users: Number(e.target.value) })}>
-                    {USER_STEPS.map((u) => (
+                    {withValue(USER_STEPS, m.users).map((u) => (
                       <option key={u} value={u}>
                         {u}
                       </option>

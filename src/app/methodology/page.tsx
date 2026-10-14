@@ -747,7 +747,9 @@ export default function MethodologyPage() {
           <ul className="mt-3 list-disc space-y-2 pl-5">
             <li>
               Models: the <A href="https://huggingface.co/docs/hub/api">Hugging Face Hub API</A>, each model&apos;s config.json
-              and parameter count, rebuilt weekly by <A href={code("scripts/build-catalog.ts")}>build-catalog.ts</A>.
+              and parameter count, rebuilt weekly by <A href={code("scripts/build-catalog.ts")}>build-catalog.ts</A>. It takes the
+              chat models of about 45 labs, plus the open-weight models that inference providers list on{" "}
+              <A href="https://models.dev">models.dev</A>.
             </li>
             <li>
               GPUs: vendor spec sheets for memory, bandwidth, tensor throughput and power, with rough rental prices, in{" "}

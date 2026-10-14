@@ -42,9 +42,11 @@ export function ModelPicker({
       const p = providerOf(m);
       byProvider.set(p, [...(byProvider.get(p) ?? []), m]);
     }
+    // Groups alphabetically, imported and custom first; newest models first inside each group.
+    const newest = (a: ModelVariant, b: ModelVariant) => (b.release_date ?? "").localeCompare(a.release_date ?? "");
     return [...byProvider]
       .sort(([a], [b]) => (a === MINE ? -1 : b === MINE ? 1 : a.localeCompare(b)))
-      .map(([label, items]) => ({ label, items }));
+      .map(([label, items]) => ({ label, items: items.sort(newest) }));
   }, [models, query, task]);
 
   return (

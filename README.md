@@ -9,7 +9,7 @@ Check whether an LLM fits on your GPUs, how fast it will run, and get the comman
 ## What it does
 
 - **Fit and speed**: memory part by part, speed per user and in total, time to first token and how many users fit,
-  for 410 models on 125 GPUs from NVIDIA, AMD, Apple and Intel, or any model imported from Hugging Face.
+  for more than 650 models on 125 GPUs from NVIDIA, AMD, Apple and Intel, or any model imported from Hugging Face.
 - **Launch command**: ready to paste for vLLM, SGLang, TensorRT-LLM, llama.cpp, Ollama, Transformers or TEI, with
   speculative decoding, CPU offloading and KV cache precision.
 - **Fine-tuning**: full, LoRA and QLoRA, with ZeRO and offloading, and the Unsloth, TRL or torchtune command.
@@ -42,7 +42,8 @@ Every formula, constant and benchmark is on the [methodology page](https://vram-
 **Data**
 
 - Models: the [Hugging Face Hub API](https://huggingface.co/docs/hub/api) (each model's `config.json` and parameter
-  count), refreshed every week.
+  count), refreshed every week: the chat models of about 45 labs, plus the open-weight models that inference providers
+  list on [models.dev](https://models.dev).
 - GPUs: vendor spec sheets for memory, bandwidth, tensor throughput and power, with rough cloud rental prices.
 - Speed measurements: the llama.cpp scoreboards for [CUDA](https://github.com/ggml-org/llama.cpp/discussions/15013),
   [ROCm](https://github.com/ggml-org/llama.cpp/discussions/15021) and

@@ -7,27 +7,37 @@ import type { ModelTask, SpecMethod } from "@/lib/calculator/types";
 import { Button } from "@/components/ui/button";
 import { Field, Section, Segmented, Select, StepSlider, ToggleRow, formatTokens } from "./controls";
 
-/** 512 to 128K, then doubling up to the model's own context window (1M, 10M, ...). */
+/** Powers of two from `from` up to `to`, each followed by the halfway size (2K, 3K, 4K, 6K, 8K...). */
+const doubling = (from: number, to: number) => {
+  const steps: number[] = [];
+  for (let s = from; s <= to; s *= 2) steps.push(s, s * 1.5);
+  return steps.filter((s) => s <= to);
+};
+/** 512 to 128K, then on up to the model's own context window (1M, 10M, ...), which is always a stop. */
 export const contextSteps = (modelContext: number) => {
-  const steps = [512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072];
-  for (let s = 262144; s < modelContext; s *= 2) steps.push(s);
-  if (modelContext > 131072) steps.push(modelContext);
-  return steps;
+  const steps = [512, ...doubling(1024, Math.max(131072, modelContext))].filter((s) => s <= 131072 || s < modelContext);
+  return modelContext > 131072 ? [...steps, modelContext] : steps;
 };
 /** Embedding/reranking inputs: 64 tokens up to the model's maximum (they can't go beyond it). */
-export const encoderSteps = (max: number) => {
-  const steps: number[] = [];
-  for (let s = 64; s < max; s *= 2) steps.push(s);
-  return [...steps, max];
-};
+export const encoderSteps = (max: number) => [...doubling(64, max).filter((s) => s < max), max];
 
-const BATCH_STEPS = [1, 2, 4, 8, 16, 32, 64, 128];
-const ENCODER_BATCH_STEPS = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512];
-const USER_STEPS = [1, 2, 4, 8, 16, 32, 64, 128, 256];
-const ACCUM_STEPS = [1, 2, 4, 8, 16, 32, 64];
-const PERCENT_STEPS = [10, 20, 30, 40, 50, 60, 70, 80, 90];
-const ACCEPT_STEPS = [30, 40, 50, 60, 70, 80, 85, 90];
-const DRAFT_TOKEN_STEPS = [1, 2, 3, 4, 5, 6, 8, 10, 12, 16];
+/** 1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24, 32... up to `max`: each power of two, then 1.25× and 1.5× of it. */
+export const countSteps = (max: number) => {
+  const steps = [1, 2, 3, 4, 5, 6];
+  for (let s = 8; s <= max; s *= 2) steps.push(s, s * 1.25, s * 1.5);
+  return steps.filter((n) => n <= max);
+};
+/** Tick labels for dense steps: only the powers of two. */
+const pow2 = (steps: number[]) => steps.filter((n) => Number.isInteger(Math.log2(n)));
+
+const BATCH_STEPS = countSteps(128);
+const ENCODER_BATCH_STEPS = countSteps(1024);
+const USER_STEPS = countSteps(2048);
+const ACCUM_STEPS = countSteps(64);
+const PERCENT_STEPS = Array.from({ length: 19 }, (_, i) => (i + 1) * 5);
+const PERCENT_MARKS = [10, 30, 50, 70, 90];
+const ACCEPT_STEPS = PERCENT_STEPS.filter((n) => n >= 30);
+const DRAFT_TOKEN_STEPS = countSteps(16);
 
 /** Typical settings for each method; acceptance depends a lot on the workload (code and RAG repeat more). */
 export const SPEC_METHODS: Record<SpecMethod, { label: string; tokens: number; acceptance: number; note: string }> = {
@@ -298,6 +308,7 @@ export function ParameterInputs(p: ParameterInputsProps) {
               label={p.task === "reranking" ? "Query + document length" : "Input length"}
               unit="tokens"
               steps={encoderSteps(p.modelContext)}
+              marks={pow2(encoderSteps(p.modelContext))}
               value={p.seqLength}
               onChange={p.setSeqLength}
               format={formatTokens}
@@ -306,6 +317,7 @@ export function ParameterInputs(p: ParameterInputsProps) {
               label="Batch size"
               unit={p.task === "reranking" ? "pairs" : "inputs"}
               steps={ENCODER_BATCH_STEPS}
+              marks={pow2(ENCODER_BATCH_STEPS)}
               value={p.batchSize}
               onChange={p.setBatchSize}
             />
@@ -316,6 +328,7 @@ export function ParameterInputs(p: ParameterInputsProps) {
               label="Context length"
               unit="tokens"
               steps={contextSteps(p.modelContext)}
+              marks={pow2(contextSteps(p.modelContext))}
               value={p.seqLength}
               onChange={p.setSeqLength}
               format={formatTokens}
@@ -327,15 +340,28 @@ export function ParameterInputs(p: ParameterInputsProps) {
                 )
               }
             />
-            <StepSlider label="Batch size" steps={BATCH_STEPS} value={p.batchSize} onChange={p.setBatchSize} />
+            <StepSlider
+              label="Batch size"
+              steps={BATCH_STEPS}
+              marks={pow2(BATCH_STEPS)}
+              value={p.batchSize}
+              onChange={p.setBatchSize}
+            />
             {inference ? (
-              <StepSlider label="Concurrent users" steps={USER_STEPS} value={p.concurrentUsers} onChange={p.setConcurrentUsers} />
+              <StepSlider
+                label="Concurrent users"
+                steps={USER_STEPS}
+                marks={pow2(USER_STEPS)}
+                value={p.concurrentUsers}
+                onChange={p.setConcurrentUsers}
+              />
             ) : (
               <>
                 <StepSlider
                   label="Gradient accumulation"
                   unit="steps"
                   steps={ACCUM_STEPS}
+                  marks={pow2(ACCUM_STEPS)}
                   value={p.gradAccumSteps}
                   onChange={p.setGradAccumSteps}
                 />
@@ -447,6 +473,7 @@ export function OptimizationToggles(p: OptimizationProps) {
             <StepSlider
               label="Shared prefix"
               steps={PERCENT_STEPS}
+              marks={PERCENT_MARKS}
               value={Math.round(p.sharedPrefixRatio * 100)}
               onChange={(v) => p.setSharedPrefixRatio(v / 100)}
               format={pct}
@@ -490,12 +517,14 @@ export function OptimizationToggles(p: OptimizationProps) {
             <StepSlider
               label="Tokens drafted per step"
               steps={DRAFT_TOKEN_STEPS}
+              marks={pow2(DRAFT_TOKEN_STEPS)}
               value={p.specDraftTokens}
               onChange={p.setSpecDraftTokens}
             />
             <StepSlider
               label="Acceptance rate"
               steps={ACCEPT_STEPS}
+              marks={PERCENT_MARKS.filter((n) => n >= 30)}
               value={Math.round(p.specAcceptanceRate * 100)}
               onChange={(v) => p.setSpecAcceptanceRate(v / 100)}
               format={pct}
@@ -513,6 +542,7 @@ export function OptimizationToggles(p: OptimizationProps) {
         <StepSlider
           label="Layers offloaded"
           steps={PERCENT_STEPS}
+          marks={PERCENT_MARKS}
           value={p.offloadPercentage}
           onChange={p.setOffloadPercentage}
           format={pct}

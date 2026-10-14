@@ -125,10 +125,14 @@ export const formatTokens = (n: number) => {
   return `${Number((n / div).toFixed(1))}${unit}`;
 };
 
-/** Slider that snaps to a fixed list of values, with evenly spaced tick labels under each stop. */
+/**
+ * Slider that snaps to a list of values, with tick labels under the `marks` among them. The value above it can be
+ * typed too, for anything in between (clamped to the slider's range).
+ */
 export function StepSlider({
   label,
   steps,
+  marks = steps,
   value,
   onChange,
   unit,
@@ -137,6 +141,7 @@ export function StepSlider({
 }: {
   label: string;
   steps: number[];
+  marks?: number[];
   value: number;
   onChange: (value: number) => void;
   unit?: string;
@@ -144,15 +149,40 @@ export function StepSlider({
   note?: React.ReactNode;
 }) {
   const last = steps.length - 1;
-  // Long ranges (e.g. 512 to 10M tokens) label every other stop, counted from the end.
-  const every = Math.ceil(steps.length / 9);
+  // Labels placed from the end, skipping any mark too close to the last one placed; past 9, every other one.
+  const at = (s: number) => steps.indexOf(s) / last;
+  const fitting: number[] = [];
+  for (const s of [...marks].reverse()) if (!fitting.length || at(fitting[fitting.length - 1]) - at(s) >= 0.09) fitting.push(s);
+  const labels = fitting.length > 9 ? fitting.filter((_, i) => i % 2 === 0) : fitting;
+  const [draft, setDraft] = useState<string | null>(null);
+  const shown = draft ?? value.toLocaleString();
+  const commit = () => {
+    const n = Math.round(Number(draft));
+    if (draft && n > 0) onChange(Math.min(steps[last], Math.max(steps[0], n)));
+    setDraft(null);
+  };
   return (
     <div className="space-y-2.5">
       <div className="flex items-baseline justify-between gap-3">
         <span className="text-[13px] text-muted-foreground">{label}</span>
-        <span className="text-sm tabular-nums text-heading">
-          {value.toLocaleString()}
-          {unit && <span className="ml-1 text-muted-foreground">{unit}</span>}
+        <span className="flex items-baseline text-sm tabular-nums text-heading">
+          <input
+            aria-label={`${label}, exact value`}
+            title="Type an exact value"
+            inputMode="numeric"
+            value={shown}
+            size={Math.max(1, shown.length)}
+            onFocus={(e) => {
+              setDraft(String(value));
+              const input = e.currentTarget;
+              requestAnimationFrame(() => input.select());
+            }}
+            onChange={(e) => setDraft(e.target.value.replace(/\D/g, ""))}
+            onBlur={commit}
+            onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+            className="rounded border border-transparent bg-transparent px-1 text-right text-base outline-none hover:border-input focus:border-ring md:text-sm"
+          />
+          {unit && <span className="ml-0.5 text-muted-foreground">{unit}</span>}
         </span>
       </div>
       <Slider
@@ -164,19 +194,16 @@ export function StepSlider({
         onValueChange={([i]) => onChange(steps[i])}
       />
       <div className="relative h-3.5 text-[11px] leading-none text-muted-foreground tabular-nums" aria-hidden>
-        {steps.map(
-          (s, i) =>
-            (last - i) % every === 0 && (
-              <span
-                key={s}
-                className="absolute -translate-x-1/2"
-                // Thumb centre travels from 8px to (100% - 8px).
-                style={{ left: `calc(8px + (100% - 16px) * ${i / last})` }}
-              >
-                {format(s)}
-              </span>
-            ),
-        )}
+        {labels.map((s) => (
+          <span
+            key={s}
+            className="absolute -translate-x-1/2"
+            // Thumb centre travels from 8px to (100% - 8px).
+            style={{ left: `calc(8px + (100% - 16px) * ${at(s)})` }}
+          >
+            {format(s)}
+          </span>
+        ))}
       </div>
       {note}
     </div>
