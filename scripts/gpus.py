@@ -3,10 +3,12 @@ Writes src/lib/data/gpus.json from the table below.
 
 Sources: vendor spec sheets (memory, bandwidth, TDP). fp16 = dense FP16/BF16 tensor throughput with
 FP32 accumulate, which is what inference frameworks use (GeForce cards run this at half their
-FP16-accumulate peak). Cards without matrix units (RDNA2, Apple) list their shader FP16 rate, and so
-do Turing GeForce cards, which matches the 2080 Ti's measured llama.cpp prompt speed better than its
-tensor peak. fp8 / fp4 = the card has native FP8 / FP4 tensor cores. price = rough on-demand rental
-in USD per GPU-hour on community and hyperscaler clouds; None when it isn't commonly rented.
+FP16-accumulate peak). Cards without matrix units (AMD before RDNA 3, GTX 16, Apple) list their
+shader FP16 rate, and so do Turing GeForce cards, which matches the 2080 Ti's measured llama.cpp
+prompt speed better than its tensor peak. Pascal lists its FP32 rate, as its FP16 runs at 1/64 speed.
+Laptop GPUs list their highest-power spec. fp8 / fp4 = the card has native FP8 / FP4 tensor cores.
+price = rough on-demand rental in USD per GPU-hour on community and hyperscaler clouds; None when it
+isn't commonly rented.
 
 The GPU picker lists each vendor's cards in table order, so keep it newest generation first and,
 within a generation, data center, then workstation, then consumer, highest tier first.
@@ -33,6 +35,9 @@ GPUS = [
   ("5060ti_8", "RTX 5060 Ti (8GB)", "nvidia", "discrete", "consumer", 8, 448, 47, 1, 1, 180, None),
   ("5060_8", "RTX 5060 (8GB)", "nvidia", "discrete", "consumer", 8, 448, 38, 1, 1, 145, None),
   ("5050_8", "RTX 5050 (8GB)", "nvidia", "discrete", "consumer", 8, 320, 26, 1, 1, 130, None),
+  ("5090_laptop_24", "RTX 5090 Laptop (24GB)", "nvidia", "discrete", "consumer", 24, 896, 114, 1, 1, 150, None),
+  ("5080_laptop_16", "RTX 5080 Laptop (16GB)", "nvidia", "discrete", "consumer", 16, 896, 83, 1, 1, 150, None),
+  ("5070ti_laptop_12", "RTX 5070 Ti Laptop (12GB)", "nvidia", "discrete", "consumer", 12, 672, 62, 1, 1, 115, None),
   # NVIDIA Hopper
   ("h200_141", "H200 SXM (141GB)", "nvidia", "discrete", "datacenter", 141, 4800, 989, 1, 0, 700, 3.6),
   ("h200nvl_141", "H200 NVL (141GB)", "nvidia", "discrete", "datacenter", 141, 4800, 836, 1, 0, 600, 3.3),
@@ -62,6 +67,10 @@ GPUS = [
   ("4060ti_16", "RTX 4060 Ti (16GB)", "nvidia", "discrete", "consumer", 16, 288, 44, 1, 0, 165, 0.12),
   ("4060ti_8", "RTX 4060 Ti (8GB)", "nvidia", "discrete", "consumer", 8, 288, 44, 1, 0, 160, None),
   ("4060_8", "RTX 4060 (8GB)", "nvidia", "discrete", "consumer", 8, 272, 30, 1, 0, 115, None),
+  ("4090_laptop_16", "RTX 4090 Laptop (16GB)", "nvidia", "discrete", "consumer", 16, 576, 86, 1, 0, 150, None),
+  ("4080_laptop_12", "RTX 4080 Laptop (12GB)", "nvidia", "discrete", "consumer", 12, 432, 68, 1, 0, 150, None),
+  ("4070_laptop_8", "RTX 4070 Laptop (8GB)", "nvidia", "discrete", "consumer", 8, 256, 40, 1, 0, 115, None),
+  ("4060_laptop_8", "RTX 4060 Laptop (8GB)", "nvidia", "discrete", "consumer", 8, 256, 29, 1, 0, 115, None),
   # NVIDIA Ampere
   ("a100_80", "A100 SXM (80GB)", "nvidia", "discrete", "datacenter", 80, 2039, 312, 0, 0, 400, 1.5),
   ("a100pcie_80", "A100 PCIe (80GB)", "nvidia", "discrete", "datacenter", 80, 1935, 312, 0, 0, 300, 1.3),
@@ -85,7 +94,9 @@ GPUS = [
   ("3070_8", "RTX 3070 (8GB)", "nvidia", "discrete", "consumer", 8, 448, 41, 0, 0, 220, None),
   ("3060ti_8", "RTX 3060 Ti (8GB)", "nvidia", "discrete", "consumer", 8, 448, 32, 0, 0, 200, None),
   ("3060_12", "RTX 3060 (12GB)", "nvidia", "discrete", "consumer", 12, 360, 25, 0, 0, 170, 0.08),
+  ("3060_8", "RTX 3060 (8GB)", "nvidia", "discrete", "consumer", 8, 240, 25, 0, 0, 170, None),
   ("3050_8", "RTX 3050 (8GB)", "nvidia", "discrete", "consumer", 8, 224, 18, 0, 0, 130, None),
+  ("3080ti_laptop_16", "RTX 3080 Ti Laptop (16GB)", "nvidia", "discrete", "consumer", 16, 512, 47, 0, 0, 150, None),
   # NVIDIA Turing
   ("t4_16", "T4 (16GB)", "nvidia", "discrete", "datacenter", 16, 320, 65, 0, 0, 70, 0.3),
   ("titan_rtx_24", "TITAN RTX (24GB)", "nvidia", "discrete", "consumer", 24, 672, 33, 0, 0, 280, None),
@@ -97,15 +108,26 @@ GPUS = [
   ("2060super_8", "RTX 2060 SUPER (8GB)", "nvidia", "discrete", "consumer", 8, 448, 14, 0, 0, 175, None),
   ("2060_12", "RTX 2060 (12GB)", "nvidia", "discrete", "consumer", 12, 336, 14, 0, 0, 184, None),
   ("2060_6", "RTX 2060 (6GB)", "nvidia", "discrete", "consumer", 6, 336, 13, 0, 0, 160, None),
+  ("1660ti_6", "GTX 1660 Ti (6GB)", "nvidia", "discrete", "consumer", 6, 288, 11, 0, 0, 120, None),
+  ("1660super_6", "GTX 1660 SUPER (6GB)", "nvidia", "discrete", "consumer", 6, 336, 10, 0, 0, 125, None),
+  ("1660_6", "GTX 1660 (6GB)", "nvidia", "discrete", "consumer", 6, 192, 10, 0, 0, 120, None),
   # NVIDIA Volta
   ("v100_32", "V100 (32GB)", "nvidia", "discrete", "datacenter", 32, 900, 125, 0, 0, 300, 0.4),
   ("v100_16", "V100 (16GB)", "nvidia", "discrete", "datacenter", 16, 900, 125, 0, 0, 300, 0.3),
+  # NVIDIA Pascal
+  ("titan_xp_12", "TITAN Xp (12GB)", "nvidia", "discrete", "consumer", 12, 548, 12.1, 0, 0, 250, None),
+  ("1080ti_11", "GTX 1080 Ti (11GB)", "nvidia", "discrete", "consumer", 11, 484, 11.3, 0, 0, 250, None),
+  ("1080_8", "GTX 1080 (8GB)", "nvidia", "discrete", "consumer", 8, 320, 8.9, 0, 0, 180, None),
+  ("1070ti_8", "GTX 1070 Ti (8GB)", "nvidia", "discrete", "consumer", 8, 256, 8.2, 0, 0, 180, None),
+  ("1070_8", "GTX 1070 (8GB)", "nvidia", "discrete", "consumer", 8, 256, 6.5, 0, 0, 150, None),
+  ("1060_6", "GTX 1060 (6GB)", "nvidia", "discrete", "consumer", 6, 192, 4.4, 0, 0, 120, None),
   # AMD CDNA 4, RDNA 4, Strix Halo
   ("mi355x_288", "Instinct MI355X (288GB)", "amd", "discrete", "datacenter", 288, 8000, 2500, 1, 1, 1400, 4.5),
   ("mi350x_288", "Instinct MI350X (288GB)", "amd", "discrete", "datacenter", 288, 8000, 2300, 1, 1, 1000, 4.0),
   ("radeon_ai_pro_r9700_32", "Radeon AI PRO R9700 (32GB)", "amd", "discrete", "workstation", 32, 640, 96, 1, 0, 300, None),
   ("rx_9070xt_16", "RX 9070 XT (16GB)", "amd", "discrete", "consumer", 16, 640, 97, 1, 0, 304, None),
   ("rx_9070_16", "RX 9070 (16GB)", "amd", "discrete", "consumer", 16, 640, 72, 1, 0, 220, None),
+  ("rx_9070gre_12", "RX 9070 GRE (12GB)", "amd", "discrete", "consumer", 12, 432, 69, 1, 0, 220, None),
   ("rx_9060xt_16", "RX 9060 XT (16GB)", "amd", "discrete", "consumer", 16, 320, 51, 1, 0, 160, None),
   ("rx_9060xt_8", "RX 9060 XT (8GB)", "amd", "discrete", "consumer", 8, 320, 51, 1, 0, 150, None),
   ("ryzen_ai_max_395_128", "Ryzen AI Max+ 395 (96GB of 128GB)", "amd", "apu", "consumer", 96, 256, 59, 0, 0, 120, None),
@@ -136,9 +158,20 @@ GPUS = [
   ("rx_6800_16", "RX 6800 (16GB)", "amd", "discrete", "consumer", 16, 512, 32, 0, 0, 250, None),
   ("rx_6750xt_12", "RX 6750 XT (12GB)", "amd", "discrete", "consumer", 12, 432, 27, 0, 0, 250, None),
   ("rx_6700xt_12", "RX 6700 XT (12GB)", "amd", "discrete", "consumer", 12, 384, 26, 0, 0, 230, None),
+  ("rx_6700_10", "RX 6700 (10GB)", "amd", "discrete", "consumer", 10, 320, 23, 0, 0, 175, None),
+  ("rx_6650xt_8", "RX 6650 XT (8GB)", "amd", "discrete", "consumer", 8, 280, 22, 0, 0, 180, None),
   ("rx_6600xt_8", "RX 6600 XT (8GB)", "amd", "discrete", "consumer", 8, 256, 21, 0, 0, 160, None),
+  ("rx_6600_8", "RX 6600 (8GB)", "amd", "discrete", "consumer", 8, 224, 18, 0, 0, 132, None),
   # AMD CDNA
   ("mi100_32", "Instinct MI100 (32GB)", "amd", "discrete", "datacenter", 32, 1229, 185, 0, 0, 300, None),
+  # AMD RDNA
+  ("rx_5700xt_8", "RX 5700 XT (8GB)", "amd", "discrete", "consumer", 8, 448, 20, 0, 0, 225, None),
+  ("rx_5700_8", "RX 5700 (8GB)", "amd", "discrete", "consumer", 8, 448, 16, 0, 0, 180, None),
+  # AMD Vega and Polaris
+  ("radeon_vii_16", "Radeon VII (16GB)", "amd", "discrete", "consumer", 16, 1024, 27, 0, 0, 300, None),
+  ("rx_vega64_8", "RX Vega 64 (8GB)", "amd", "discrete", "consumer", 8, 484, 25, 0, 0, 295, None),
+  ("rx_vega56_8", "RX Vega 56 (8GB)", "amd", "discrete", "consumer", 8, 410, 21, 0, 0, 210, None),
+  ("rx_580_8", "RX 580 (8GB)", "amd", "discrete", "consumer", 8, 256, 6.2, 0, 0, 185, None),
   # Intel
   ("gaudi3_128", "Gaudi 3 (128GB)", "intel", "discrete", "datacenter", 128, 3700, 1835, 1, 0, 900, None),
   ("arc_pro_b60_24", "Arc Pro B60 (24GB)", "intel", "discrete", "workstation", 24, 456, 98, 0, 0, 200, None),
@@ -146,12 +179,18 @@ GPUS = [
   ("arc_b580_12", "Arc B580 (12GB)", "intel", "discrete", "consumer", 12, 456, 117, 0, 0, 190, None),
   ("arc_b570_10", "Arc B570 (10GB)", "intel", "discrete", "consumer", 10, 380, 92, 0, 0, 150, None),
   ("arc_a770_16", "Arc A770 (16GB)", "intel", "discrete", "consumer", 16, 560, 138, 0, 0, 225, None),
+  ("arc_a770_8", "Arc A770 (8GB)", "intel", "discrete", "consumer", 8, 512, 138, 0, 0, 225, None),
   ("arc_a750_8", "Arc A750 (8GB)", "intel", "discrete", "consumer", 8, 512, 118, 0, 0, 225, None),
+  ("arc_a580_8", "Arc A580 (8GB)", "intel", "discrete", "consumer", 8, 512, 84, 0, 0, 185, None),
+  ("arc_a380_6", "Arc A380 (6GB)", "intel", "discrete", "consumer", 6, 186, 33, 0, 0, 75, None),
 ]
 
 # Apple, newest chip first: one entry per memory size, largest first.
 # chip, sizes, bandwidth GB/s, GPU TFLOPS (FP16 runs at FP32 rate), package power W
 APPLE = [
+  ("M5 Max", [128, 64, 48], 614, 60.0, 70),
+  ("M5 Max", [36], 460, 48.0, 60),
+  ("M5 Pro", [64, 48, 24], 307, 30.0, 40),
   ("M5", [32, 24, 16], 153, 15.0, 25),
   ("M4 Max", [128, 64, 48], 546, 18.4, 70),
   ("M4 Max", [36], 410, 14.7, 60),
