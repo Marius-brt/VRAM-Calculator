@@ -635,49 +635,75 @@ export function PoolPlanner({ gpus, models, pool, setPool, onOpenHfImport }: Poo
                       {rows.length}× {gpu.label}
                     </span>
                   </div>
-                  {rows.map((g) => (
-                    <div key={g.index} className="flex items-center gap-3 text-xs">
-                      <span className="w-11 shrink-0 text-muted-foreground">GPU {g.index}</span>
-                      <div className="relative flex h-5 min-w-0 flex-1 gap-px overflow-hidden rounded bg-secondary">
-                        {plan.placements
-                          .filter((p) => p.gpus.some((r) => r.nodeId === g.nodeId && r.index === g.index))
-                          .flatMap((p) => {
-                            const name = pool.models.find((m) => m.id === p.modelId)?.model.name;
+                  {rows.map((g) => {
+                    const here = plan.placements.filter((p) => p.gpus.some((r) => r.nodeId === g.nodeId && r.index === g.index));
+                    const nameOf = (id: string) => pool.models.find((m) => m.id === id)?.model.name;
+                    return (
+                      // Hover, or focus (tab, or tap on touch screens), shows what this GPU holds.
+                      <div
+                        key={g.index}
+                        tabIndex={0}
+                        aria-label={`GPU ${g.index}: ${round1(g.used)} of ${g.memory} GB`}
+                        className="group relative flex items-center gap-3 rounded text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        <span className="w-11 shrink-0 text-muted-foreground">GPU {g.index}</span>
+                        <div className="relative flex h-5 min-w-0 flex-1 gap-px overflow-hidden rounded bg-secondary">
+                          {here.flatMap((p) => [
                             // Weights and runtime in the model's colour, its KV cache in a lighter shade.
-                            return [
+                            <div
+                              key={p.modelId}
+                              className="h-full shrink-0 transition-[width] duration-300"
+                              style={{
+                                width: `${((p.perGpuGb - p.kvPerGpuGb) / g.memory) * 100}%`,
+                                background: colorOf(p.modelId),
+                              }}
+                            />,
+                            p.kvPerGpuGb > 0 && (
                               <div
-                                key={p.modelId}
-                                className="h-full shrink-0 transition-[width] duration-300"
-                                title={`${name}: ${round1(p.perGpuGb - p.kvPerGpuGb)} GB weights and runtime`}
-                                style={{
-                                  width: `${((p.perGpuGb - p.kvPerGpuGb) / g.memory) * 100}%`,
-                                  background: colorOf(p.modelId),
-                                }}
-                              />,
-                              p.kvPerGpuGb > 0 && (
-                                <div
-                                  key={`${p.modelId}-kv`}
-                                  className="h-full shrink-0 opacity-50 transition-[width] duration-300"
-                                  title={`${name}: ${round1(p.kvPerGpuGb)} GB KV cache`}
-                                  style={{ width: `${(p.kvPerGpuGb / g.memory) * 100}%`, background: colorOf(p.modelId) }}
-                                />
-                              ),
-                            ];
-                          })}
-                        {/* Past this line is the runtime's reserve. */}
-                        <div
-                          className="absolute inset-y-0 w-px bg-heading/50"
-                          style={{ left: `${(g.usable / g.memory) * 100}%` }}
-                        />
+                                key={`${p.modelId}-kv`}
+                                className="h-full shrink-0 opacity-50 transition-[width] duration-300"
+                                style={{ width: `${(p.kvPerGpuGb / g.memory) * 100}%`, background: colorOf(p.modelId) }}
+                              />
+                            ),
+                          ])}
+                          {/* Past this line is the runtime's reserve. */}
+                          <div
+                            className="absolute inset-y-0 w-px bg-heading/50"
+                            style={{ left: `${(g.usable / g.memory) * 100}%` }}
+                          />
+                        </div>
+                        <span className="w-24 shrink-0 text-right tabular-nums text-muted-foreground">
+                          <span className="text-heading">
+                            <Num value={g.used} />
+                          </span>{" "}
+                          / {g.memory} GB
+                        </span>
+                        <div className="pointer-events-none absolute left-14 top-full z-20 mt-1.5 hidden w-72 max-w-[calc(100vw-7.5rem)] rounded-md border bg-popover px-3 py-2 tabular-nums shadow-lg group-hover:block group-focus:block">
+                          <div className="mb-1.5 font-medium text-heading">
+                            GPU {g.index}, node {i + 1}
+                          </div>
+                          {here.length === 0 && <div className="text-muted-foreground">Nothing placed here.</div>}
+                          {here.map((p) => (
+                            <div key={p.modelId} className="mb-1.5">
+                              <div className="flex items-baseline gap-2">
+                                <span className="h-2 w-2 shrink-0 rounded-sm" style={{ background: colorOf(p.modelId) }} />
+                                <span className="min-w-0 truncate text-heading">{nameOf(p.modelId)}</span>
+                                <span className="ml-auto shrink-0 pl-2 text-heading">{round1(p.perGpuGb)} GB</span>
+                              </div>
+                              <div className="pl-4 text-muted-foreground">
+                                {round1(p.perGpuGb - p.kvPerGpuGb)} GB weights and runtime
+                                {p.kvPerGpuGb > 0 && `, ${round1(p.kvPerGpuGb)} GB KV cache`}
+                              </div>
+                            </div>
+                          ))}
+                          <div className="border-t pt-1.5 text-muted-foreground">
+                            {round1(g.used)} of {round1(g.usable)} GB usable, {round1(Math.max(0, g.usable - g.used))} GB free.
+                            The runtime keeps the other {round1(g.memory - g.usable)} GB.
+                          </div>
+                        </div>
                       </div>
-                      <span className="w-24 shrink-0 text-right tabular-nums text-muted-foreground">
-                        <span className="text-heading">
-                          <Num value={g.used} />
-                        </span>{" "}
-                        / {g.memory} GB
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               );
             })}

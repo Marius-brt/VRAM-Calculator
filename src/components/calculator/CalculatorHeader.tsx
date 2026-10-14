@@ -24,7 +24,6 @@ function HeaderButton({ icon: Icon, label, onClick }: { icon: typeof Bookmark; l
 }
 
 export function CalculatorHeader({ onOpenSavedConfigs, isDark, setIsDark, view, setView }: CalculatorHeaderProps) {
-  const simple = view === "simple";
   const [copied, setCopied] = useState(false);
 
   // The page keeps the URL in sync with the current setup, so the address is the share link.
@@ -53,9 +52,7 @@ export function CalculatorHeader({ onOpenSavedConfigs, isDark, setIsDark, view, 
           ]}
         />
         <HeaderButton icon={Bookmark} label="Saved setups" onClick={onOpenSavedConfigs} />
-        {simple && (
-          <HeaderButton icon={copied ? Check : Link2} label={copied ? "Link copied" : "Copy link"} onClick={handleShare} />
-        )}
+        <HeaderButton icon={copied ? Check : Link2} label={copied ? "Link copied" : "Copy link"} onClick={handleShare} />
         <Button
           variant="ghost"
           size="icon"

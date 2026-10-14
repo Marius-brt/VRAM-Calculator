@@ -8,6 +8,9 @@ import type { ModelTask, ModelVariant } from "../src/lib/calculator/types";
 
 const OUT = new URL("../src/lib/data/models.json", import.meta.url);
 const headers: Record<string, string> = process.env.HF_TOKEN ? { Authorization: `Bearer ${process.env.HF_TOKEN}` } : {};
+const previous: ModelVariant[] = await Bun.file(OUT)
+  .json()
+  .catch(() => []);
 
 // Quantized copies, adapters, research checkpoints and non-chat models.
 const SKIP =
@@ -92,12 +95,17 @@ async function discover(org: string) {
       get(`https://huggingface.co/api/models?author=${org}&sort=${sort}&direction=-1&limit=${sort === "downloads" ? 40 : 25}`),
     ),
   );
-  return lists
+  const found = lists
     .flat()
     .filter(Boolean)
     .filter((m: any) => CHAT_PIPELINES.has(m.pipeline_tag) && !SKIP.test(m.id.split("/")[1]))
     .filter((m: any) => m.downloads >= 3000 || (Date.parse(m.createdAt) > since && m.downloads >= 500))
     .map((m: any) => m.id as string);
+  if (lists.every(Boolean)) return found;
+  // Hugging Face didn't answer: keep the org's models from the current catalog rather than dropping them.
+  console.warn(`  couldn't list ${org}; keeping its current models`);
+  const kept = previous.filter((m) => (m.task ?? "generation") === "generation" && m.hf_repo_id?.split("/")[0] === org);
+  return [...found, ...kept.map((m) => m.hf_repo_id!)];
 }
 
 /** Gated repos (Llama, Gemma...) expose config.json only after accepting a license; public mirrors carry the same file. */
@@ -145,9 +153,6 @@ const models = built
   .filter((m): m is ModelVariant => !!m && !seen.has(m.slug!) && !!seen.add(m.slug!))
   .sort((a, b) => a.provider!.localeCompare(b.provider!) || a.num_of_params! - b.num_of_params!);
 // A much smaller result means Hugging Face throttled us; keep the existing catalog.
-const previous = await Bun.file(OUT)
-  .json()
-  .catch(() => []);
 if (models.length < previous.length * 0.8 && !process.argv.includes("--force")) {
   console.error(`Only ${models.length} models (was ${previous.length}); not overwriting. Re-run later or pass --force.`);
   process.exit(1);

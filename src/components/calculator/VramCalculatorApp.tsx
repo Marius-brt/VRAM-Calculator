@@ -28,6 +28,28 @@ const DEFAULT_MODEL = "llama-3-1-8b-instruct";
 
 const DEFAULT_GPU = "4090_24";
 
+/** Advanced setups travel in the link as base64url JSON: catalog models by slug, imported and custom ones in full. */
+const encodePool = (p: PoolConfig) => {
+  const models = p.models.map((m) => ({
+    ...m,
+    model: m.model.is_preset === 1 && m.model.slug ? { slug: m.model.slug } : m.model,
+  }));
+  const bytes = new TextEncoder().encode(JSON.stringify({ ...p, models }));
+  return btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+};
+const decodePool = (s: string): PoolConfig | null => {
+  try {
+    const bytes = Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
+    const p = JSON.parse(new TextDecoder().decode(bytes));
+    return Array.isArray(p?.nodes) && Array.isArray(p?.models) ? p : null;
+  } catch {
+    return null;
+  }
+};
+
 interface VramCalculatorAppProps {
   initialModels: any[];
   initialGpus: GpuSpec[];
@@ -275,9 +297,10 @@ export function VramCalculatorApp({ initialModels, initialGpus }: VramCalculator
 
   // Stored pools and setups hold a copy of each model; prefer the current catalog entry.
   const latest = (m: ModelVariant) => (m?.slug && models.find((x) => x.slug === m.slug)) || m;
+  // A model that left the catalog is only a slug in a shared link, so it is dropped.
   const withLatestModels = (p: PoolConfig): PoolConfig => ({
     ...p,
-    models: p.models.map((m) => ({ ...m, model: latest(m.model) })),
+    models: p.models.map((m) => ({ ...m, model: latest(m.model) })).filter((m) => m.model?.num_of_params),
   });
 
   // The pool is remembered per browser. Must stay above the pool-writing effect.
@@ -297,6 +320,8 @@ export function VramCalculatorApp({ initialModels, initialGpus }: VramCalculator
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("view") === "advanced") setView("advanced");
+    const shared = decodePool(params.get("pool") ?? "");
+    if (shared) setPool(withLatestModels(shared));
     const found = models.find((m) => m.slug === params.get("model"));
     if (found) setSelectedModel(found);
     const gKey = params.get("gpu");
@@ -318,7 +343,7 @@ export function VramCalculatorApp({ initialModels, initialGpus }: VramCalculator
   useEffect(() => {
     const params =
       view === "advanced"
-        ? new URLSearchParams({ view })
+        ? new URLSearchParams({ view, pool: encodePool(pool) })
         : new URLSearchParams({
             mode: calcMode,
             gpu: selectedGpuKey,
@@ -329,7 +354,7 @@ export function VramCalculatorApp({ initialModels, initialGpus }: VramCalculator
     if (view === "simple" && selectedModel.slug) params.set("model", selectedModel.slug);
     if (view === "simple" && replicas > 1) params.set("copies", String(replicas));
     window.history.replaceState(null, "", `?${params}`);
-  }, [view, calcMode, selectedGpuKey, numGpus, replicas, quantization, seqLength, selectedModel.slug]);
+  }, [view, pool, calcMode, selectedGpuKey, numGpus, replicas, quantization, seqLength, selectedModel.slug]);
 
   const loadSetup = (setup: SavedSetup) => {
     if (setup.kind === "pool") {
@@ -349,6 +374,35 @@ export function VramCalculatorApp({ initialModels, initialGpus }: VramCalculator
     if (loaded.framework_preset)
       (loaded.calc_mode === "finetuning" ? setTrainingRuntime : setServingRuntime)(loaded.framework_preset);
     if (loaded.calc_mode) setCalcMode(loaded.calc_mode);
+    // Older setups lack some fields; those keep their current value.
+    const restore = <T,>(value: T | undefined, set: (v: T) => void) => value !== undefined && set(value);
+    const opt = loaded.optimization_config ?? {};
+    restore(loaded.interconnect_type, setInterconnect);
+    restore(loaded.inter_node_interconnect, setInterNodeInterconnect);
+    restore(loaded.custom_vram, setCustomVram);
+    restore(loaded.custom_bandwidth, setCustomBandwidth);
+    restore(loaded.custom_tflops, setCustomTflops);
+    restore(loaded.enable_prefix_caching, setEnablePrefixCaching);
+    restore(loaded.shared_prefix_ratio, setSharedPrefixRatio);
+    restore(loaded.enable_offloading, setEnableOffloading);
+    restore(loaded.percentage_offload, (v) => setOffloadPercentage(Math.round(v * 100)));
+    restore(loaded.offload_kv_cache, setOffloadKvCache);
+    restore(loaded.enable_speculative_decoding, setEnableSpeculative);
+    restore(loaded.speculative_method, setSpecMethod);
+    restore(loaded.speculative_draft_tokens, setSpecDraftTokens);
+    restore(loaded.speculative_draft_model_params, setSpecDraftParams);
+    restore(loaded.speculative_acceptance_rate, setSpecAcceptanceRate);
+    restore(loaded.finetuning_method, setFtMethod);
+    restore(loaded.fine_tuning_quantization, setFtQuant);
+    restore(loaded.lora_rank, setLoraRank);
+    restore(loaded.gradient_accumulation_steps, setGradAccumSteps);
+    restore(loaded.num_samples, setNumSamples);
+    restore(loaded.num_epochs, setEpochs);
+    restore(opt.gradient_checkpointing, setGradCheckpointing);
+    restore(opt.flash_attention, setFlashAttention);
+    restore(opt.zero_stage, setZeroStage);
+    if (loaded.optimization_config)
+      setOptimizerType(opt.use_paged_optimizer ? "paged_adamw" : opt.use_8bit_optimizer ? "adamw_8bit" : "adamw");
     if (loaded.num_nodes) {
       setIsCluster(true);
       setNumNodes(loaded.num_nodes);

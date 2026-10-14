@@ -13,6 +13,7 @@ export interface SavedSetup {
   name: string;
   notes: string;
   createdAt: number;
+  updatedAt?: number;
   kind: SetupKind;
   config: any;
 }
@@ -52,12 +53,22 @@ export function SavedConfigsModal({ open, onClose, current, onLoad, onDownload }
   const [name, setName] = useState("");
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
+  // The setup last loaded or saved here; while the view matches its kind, saving can update it in place.
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [updated, setUpdated] = useState(false);
+  const active = setups.find((s) => s.id === activeId && s.kind === current.kind);
 
   useEffect(() => {
     if (open) {
-      setSetups(readSetups());
+      const list = readSetups();
+      const a = list.find((s) => s.id === activeId && s.kind === current.kind);
+      setSetups(list);
+      setName(a?.name ?? "");
+      setNotes(a?.notes ?? "");
       setError(null);
+      setUpdated(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const update = (next: SavedSetup[]) => {
@@ -80,9 +91,15 @@ export function SavedConfigsModal({ open, onClose, current, onLoad, onDownload }
       kind: current.kind,
       config: current.config,
     };
-    if (update([setup, ...setups])) {
-      setName("");
-      setNotes("");
+    if (update([setup, ...setups])) setActiveId(setup.id);
+  };
+
+  const handleUpdate = () => {
+    if (!active || !name.trim()) return;
+    const next = { ...active, name: name.trim(), notes: notes.trim(), config: current.config, updatedAt: Date.now() };
+    if (update(setups.map((s) => (s.id === active.id ? next : s)))) {
+      setUpdated(true);
+      setTimeout(() => setUpdated(false), 2000);
     }
   };
 
@@ -98,7 +115,8 @@ export function SavedConfigsModal({ open, onClose, current, onLoad, onDownload }
           className="space-y-2"
           onSubmit={(e) => {
             e.preventDefault();
-            handleSave();
+            if (active) handleUpdate();
+            else handleSave();
           }}
         >
           <div className="grid gap-2 sm:grid-cols-2">
@@ -112,7 +130,9 @@ export function SavedConfigsModal({ open, onClose, current, onLoad, onDownload }
           </div>
           <div className="flex items-center justify-between gap-3">
             <span className="text-xs text-muted-foreground">
-              Saves the current {KIND_LABELS[current.kind].toLowerCase()} setup.
+              {active
+                ? `Update saves the current setup over “${active.name}”.`
+                : `Saves the current ${KIND_LABELS[current.kind].toLowerCase()} setup.`}
             </span>
             <div className="flex items-center gap-2">
               {onDownload && (
@@ -120,8 +140,13 @@ export function SavedConfigsModal({ open, onClose, current, onLoad, onDownload }
                   Download JSON
                 </Button>
               )}
+              {active && (
+                <Button type="button" variant="outline" size="sm" disabled={!name.trim()} onClick={handleSave}>
+                  Save as new
+                </Button>
+              )}
               <Button type="submit" size="sm" disabled={!name.trim()}>
-                Save current setup
+                {active ? (updated ? "Updated" : "Update") : "Save current setup"}
               </Button>
             </div>
           </div>
@@ -142,10 +167,11 @@ export function SavedConfigsModal({ open, onClose, current, onLoad, onDownload }
                     <div className="flex items-baseline gap-2">
                       <span className="truncate font-medium text-heading">{s.name}</span>
                       <span className="shrink-0 text-xs text-muted-foreground">{KIND_LABELS[s.kind] ?? s.kind}</span>
+                      {s.id === active?.id && <span className="shrink-0 text-xs text-link">Loaded</span>}
                     </div>
                     {s.notes && <p className="mt-0.5 truncate text-muted-foreground">{s.notes}</p>}
                     <span className="mt-0.5 block text-xs text-muted-foreground">
-                      Saved {new Date(s.createdAt).toLocaleDateString()}
+                      {s.updatedAt ? "Updated" : "Saved"} {new Date(s.updatedAt ?? s.createdAt).toLocaleDateString()}
                     </span>
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
@@ -153,6 +179,7 @@ export function SavedConfigsModal({ open, onClose, current, onLoad, onDownload }
                       size="sm"
                       variant="outline"
                       onClick={() => {
+                        setActiveId(s.id);
                         onLoad(s);
                         onClose();
                       }}
