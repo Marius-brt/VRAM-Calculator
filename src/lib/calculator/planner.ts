@@ -26,6 +26,24 @@ export interface PoolNode {
   link: string;
 }
 
+/** The Simple view's serving options, per model; anything left out keeps the defaults (runtime picked by GPU). */
+export type ServingOptions = Pick<
+  CalculatorInput,
+  | "framework_preset"
+  | "kv_cache_quantization"
+  | "enable_prefix_caching"
+  | "shared_prefix_ratio"
+  | "enable_offloading"
+  | "percentage_offload"
+  | "offload_kv_cache"
+  | "enable_speculative_decoding"
+  | "speculative_method"
+  | "speculative_draft_tokens"
+  | "speculative_draft_model_params"
+  | "speculative_acceptance_rate"
+  | "optimization_config"
+>;
+
 export interface PoolModel {
   id: string;
   model: ModelVariant;
@@ -39,6 +57,8 @@ export interface PoolModel {
   pin?: { nodeId?: string; gpus?: number[]; tp?: number; copies?: number };
   /** Service targets: tokens/s per user (items/s for embedding models) and time to first token. */
   target?: { minSpeed?: number; maxTtftMs?: number };
+  /** Chat models only: embedding and reranking models always run on TEI with defaults. */
+  options?: ServingOptions;
 }
 
 export interface PoolConfig {
@@ -67,6 +87,8 @@ export interface Placement {
   perGpuGb: number;
   /** Part of perGpuGb that is KV cache (0 for embedding/reranking models). */
   kvPerGpuGb: number;
+  /** Weights and KV cache kept in CPU memory, per copy (GB). */
+  offloadedGb: number;
   /** Share of each GPU's memory to hand this model, e.g. vLLM --gpu-memory-utilization. */
   memoryFraction: number;
   usersPerCopy: number;
@@ -100,6 +122,8 @@ export type Evaluate = (input: CalculatorInput, gpu: GpuSpec) => CalculatorOutpu
 export const QUANT_LADDER: Record<string, string[]> = {
   vllm: ["fp16", "fp8", "awq"],
   llama_cpp: ["fp16", "q8_0", "q4_k_m"],
+  ollama: ["fp16", "q8_0", "q4_k_m"],
+  hf_transformers: ["fp16", "int8", "int4"],
   tei: ["fp16"],
 };
 const MAX_LEVEL = 2;
@@ -108,6 +132,10 @@ export const MAX_COPIES = 8;
 
 export const runtimeFor = (gpu: GpuSpec, model?: ModelVariant) =>
   isEncoderTask(model) ? "tei" : gpu.vendor === "apple" ? "llama_cpp" : "vllm";
+
+/** The runtime the user picked for a chat model, else the one for its GPU. */
+const runtimeOf = (gpu: GpuSpec, m: PoolModel) =>
+  (!isEncoderTask(m.model) && m.options?.framework_preset) || runtimeFor(gpu, m.model);
 
 const round = (n: number, d = 2) => Number(n.toFixed(d));
 
@@ -126,10 +154,11 @@ export function planPool(config: PoolConfig, gpuSpecs: GpuSpec[], evaluate: Eval
     const out = evaluate(
       {
         calc_mode: "inference",
+        kv_cache_quantization: "auto",
+        ...(encoder ? {} : m.options),
         gpu_key: gpu.key,
         model_variant: m.model,
         quantization: quant,
-        kv_cache_quantization: "auto",
         batch_size: 1,
         seq_length: m.contextLength,
         concurrent_users: users,
@@ -138,7 +167,7 @@ export function planPool(config: PoolConfig, gpuSpecs: GpuSpec[], evaluate: Eval
         pp_degree: pp,
         num_nodes: pp > 1 ? pp : 1,
         gpus_per_node: pp > 1 ? tp : tp * pp,
-        framework_preset: runtimeFor(gpu, m.model) as CalculatorInput["framework_preset"],
+        framework_preset: runtimeOf(gpu, m) as CalculatorInput["framework_preset"],
         interconnect_type: link,
         inter_node_interconnect: config.network,
       },
@@ -163,7 +192,7 @@ export function planPool(config: PoolConfig, gpuSpecs: GpuSpec[], evaluate: Eval
     return cache.get(key)!;
   };
 
-  const ladderFor = (gpu: GpuSpec, m: PoolModel) => QUANT_LADDER[runtimeFor(gpu, m.model)] ?? ["fp16"];
+  const ladderFor = (gpu: GpuSpec, m: PoolModel) => QUANT_LADDER[runtimeOf(gpu, m)] ?? QUANT_LADDER.vllm;
   const quantFor = (m: PoolModel, gpu: GpuSpec, level: number) =>
     m.quant === "auto" ? ladderFor(gpu, m)[Math.min(level, ladderFor(gpu, m).length - 1)] : m.quant;
 
@@ -181,7 +210,7 @@ export function planPool(config: PoolConfig, gpuSpecs: GpuSpec[], evaluate: Eval
   ): Placement => ({
     modelId: m.id,
     task: m.model.task,
-    runtime: runtimeFor(node.gpu, m.model),
+    runtime: runtimeOf(node.gpu, m),
     quant,
     tp,
     pp,
@@ -189,6 +218,7 @@ export function planPool(config: PoolConfig, gpuSpecs: GpuSpec[], evaluate: Eval
     gpus: copies.flat(),
     perGpuGb: round(r.perGpu),
     kvPerGpuGb: round(r.kvPerGpu),
+    offloadedGb: round(r.out.offloaded_memory),
     memoryFraction: Math.min(0.99, Math.ceil((r.perGpu / node.gpu.memory) * 100 + 1) / 100),
     usersPerCopy: Math.ceil(m.users / copies.length),
     perUserTps: r.out.per_user_tps,
@@ -213,7 +243,11 @@ export function planPool(config: PoolConfig, gpuSpecs: GpuSpec[], evaluate: Eval
     const node = nodes.find((n) => n.id === m.pin?.nodeId);
     const gpus = node && m.pin?.gpus?.length ? [...new Set(m.pin.gpus)].filter((i) => i < node.count).sort((a, b) => a - b) : [];
     // GPUs picked by hand hold exactly one copy.
-    const copies = gpus.length ? 1 : m.pin?.copies ? Math.min(MAX_COPIES, Math.max(1, Math.round(Number(m.pin.copies) || 1))) : undefined;
+    const copies = gpus.length
+      ? 1
+      : m.pin?.copies
+        ? Math.min(MAX_COPIES, Math.max(1, Math.round(Number(m.pin.copies) || 1)))
+        : undefined;
     return { node, gpus: gpus.length ? gpus : null, tp: gpus.length ? gpus.length : m.pin?.tp, copies };
   };
 
@@ -223,7 +257,8 @@ export function planPool(config: PoolConfig, gpuSpecs: GpuSpec[], evaluate: Eval
     const sameType = [first, ...nodes.filter((n) => n !== first && n.gpuKey === first.gpuKey)];
     const out: GpuRef[][] = [];
     // Copies of one model never share a GPU: they would split its bandwidth instead of adding to it.
-    const taken = (node: Node, u: number[]) => u.map((x, i) => (out.flat().some((g) => g.nodeId === node.id && g.index === i) ? Infinity : x));
+    const taken = (node: Node, u: number[]) =>
+      u.map((x, i) => (out.flat().some((g) => g.nodeId === node.id && g.index === i) ? Infinity : x));
     for (let c = 0; c < copies; c++) {
       const hit = (fixed ? [first] : sameType).find((node) => {
         const u = trial.get(node.id)!;
@@ -244,7 +279,9 @@ export function planPool(config: PoolConfig, gpuSpecs: GpuSpec[], evaluate: Eval
     const pin = pinsOf(m);
     const hasTarget = !!(m.target?.minSpeed || m.target?.maxTtftMs);
     // Shapes in order of GPUs used; extra copies only for models with targets (idle GPUs get them later).
-    const copyCounts = pin.copies ? [pin.copies] : Array.from({ length: hasTarget && !pin.gpus ? MAX_COPIES : 1 }, (_, i) => i + 1);
+    const copyCounts = pin.copies
+      ? [pin.copies]
+      : Array.from({ length: hasTarget && !pin.gpus ? MAX_COPIES : 1 }, (_, i) => i + 1);
     const shapes = (pin.tp ? [pin.tp] : TP_SIZES)
       .flatMap((tp) => copyCounts.map((copies) => ({ tp, copies })))
       .sort((a, b) => a.tp * a.copies - b.tp * b.copies || a.copies - b.copies);

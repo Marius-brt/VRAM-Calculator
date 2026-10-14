@@ -20,6 +20,7 @@ Check whether an LLM fits on your GPUs, how fast it will run, and get the comman
 ![The Advanced view placing Llama 3.1 8B and Qwen3 14B on two RTX 4090s](docs/images/advanced-view.png)
 
 Everything runs in your browser: no account, nothing stored on a server. Saved setups stay in your browser's storage.
+The site counts visits with a self-hosted [Plausible](https://plausible.io) (no cookies, no personal data).
 
 ## How accurate it is
 
@@ -134,7 +135,7 @@ so the GitHub Pages build leaves them out.
 | Route | What it returns |
 | --- | --- |
 | `POST /api/v1/calculate` | Memory, speed and cost for one setup. Body: `{ calc_mode, gpu_key, model_variant, quantization, seq_length, concurrent_users, num_gpus, tp_degree, framework_preset, ... }` |
-| `POST /api/v1/plan` | A pool plan. Body: `{ network, nodes: [{ id, gpuKey, count, link }], models: [{ id, model, contextLength, users, quant, target?, pin? }] }` |
+| `POST /api/v1/plan` | A pool plan. Body: `{ network, nodes: [{ id, gpuKey, count, link }], models: [{ id, model, contextLength, users, quant, target?, pin?, options? }] }`; `options` takes the calculate fields such as `framework_preset` or `enable_speculative_decoding`. |
 | `GET /api/models?q=` | The model catalog, optionally filtered by name, provider or family. |
 | `GET /api/gpus` | The GPU catalog. |
 
@@ -157,5 +158,10 @@ If the calculator helps your work, please cite it. GitHub's "Cite this repositor
   url    = {https://github.com/Marius-brt/VRAM-Calculator}
 }
 ```
+
+## License
+
+[Apache-2.0](LICENSE): free to use, change and sell, including in commercial products. Anything built on it must keep
+the [NOTICE](NOTICE) file and credit "VRAM Calculator by Marius Brouty" with a link to this repository.
 
 Made by [Marius Brouty](https://mariusbrt.com).

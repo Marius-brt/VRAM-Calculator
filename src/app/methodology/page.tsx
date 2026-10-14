@@ -713,7 +713,9 @@ export default function MethodologyPage() {
             is too slow; a model spans identical machines with pipeline parallelism only when no single machine works. Automatic
             precision starts every model at the highest quality and steps all of them down together while that places more models
             or meets more targets, then lets each step back up if nothing gets worse. Idle GPUs end up as tensor parallelism or
-            extra copies for the model that gains the most speed per user. Every placement is scored with the same engine.
+            extra copies for the model that gains the most speed per user. Every placement is scored with the same engine. Unless
+            you pick one, each chat model runs on vLLM (llama.cpp on Macs) and embedding models on Text Embeddings Inference; the
+            KV cache format, speculative decoding, prefix caching and offloading work as in the Simple view.
           </p>
           <p>
             Find hardware runs the current model on every GPU of the catalog at full, 8-bit and 4-bit precision; Find models runs

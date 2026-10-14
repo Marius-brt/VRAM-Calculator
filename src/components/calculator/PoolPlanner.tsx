@@ -1,31 +1,48 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { CopyPlus, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, CopyPlus, Plus, Trash2 } from "lucide-react";
 import { GpuSpec, ModelVariant } from "@/lib/calculator/types";
-import { MAX_COPIES, planPool, type Placement, type PoolConfig, type PoolPlan } from "@/lib/calculator/planner";
+import {
+  MAX_COPIES,
+  planPool,
+  type Placement,
+  type PoolConfig,
+  type PoolPlan,
+  type ServingOptions,
+} from "@/lib/calculator/planner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Field, Num, Section, Select, Stepper, formatTokens } from "./controls";
 import { GpuPicker } from "./GpuSelector";
-import { Command, launch } from "./LaunchCommand";
+import { Command, launch, servingOf } from "./LaunchCommand";
 import { ModelPicker } from "./ModelSelector";
-import { contextSteps, encoderSteps } from "./ParameterInputs";
+import {
+  KV_QUANTS,
+  OptimizationToggles,
+  SERVING_RUNTIMES,
+  WEIGHT_QUANTS,
+  WeightOptions,
+  contextSteps,
+  encoderSteps,
+  options,
+} from "./ParameterInputs";
 import { GPU_LINK_OPTIONS, NETWORK_OPTIONS, defaultGpuLink, isEncoderTask } from "@/lib/calculator/engine";
 
 const MODEL_COLORS = ["#845ef7", "#22b8cf", "#f06595", "#94d82d", "#ffa94d", "#748ffc", "#cc5de8", "#20c997"];
 
-const QUANTS: [string, string][] = [
-  ["auto", "Auto"],
-  ["fp16", "FP16 / BF16"],
-  ["fp8", "FP8"],
-  ["nvfp4", "NVFP4 (Blackwell)"],
-  ["awq", "AWQ (4-bit)"],
-  ["q8_0", "GGUF Q8_0"],
-  ["q4_k_m", "GGUF Q4_K_M"],
-];
-const QUANT_LABEL = Object.fromEntries(QUANTS);
+const QUANT_LABEL = Object.fromEntries(WEIGHT_QUANTS.flatMap(([, list]) => list));
+const RUNTIME_LABEL = Object.fromEntries(SERVING_RUNTIMES);
+/** The Simple view's starting values, written the first time a model's options change. */
+const SERVING_DEFAULTS: ServingOptions = {
+  shared_prefix_ratio: 0.3,
+  percentage_offload: 0.3,
+  speculative_method: "draft",
+  speculative_draft_tokens: 4,
+  speculative_draft_model_params: 1.5,
+  speculative_acceptance_rate: 0.7,
+};
 const USER_STEPS = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512];
 
 const newId = () => Math.random().toString(36).slice(2, 9);
@@ -230,6 +247,88 @@ function PinControls({
   );
 }
 
+/** Runtime, KV cache and the Simple view's toggles for one chat model, folded away until needed. */
+function ModelOptions({
+  options: o = {},
+  autoRuntime,
+  set,
+}: {
+  options?: ServingOptions;
+  autoRuntime?: string;
+  set: (patch: ServingOptions) => void;
+}) {
+  const on = [
+    o.framework_preset,
+    o.kv_cache_quantization && o.kv_cache_quantization !== "auto",
+    o.enable_prefix_caching,
+    o.enable_speculative_decoding,
+    o.enable_offloading,
+    o.optimization_config?.flash_attention === false,
+  ].filter(Boolean).length;
+  return (
+    <details className="group">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[13px] text-muted-foreground hover:text-heading [&::-webkit-details-marker]:hidden">
+        <span>
+          More options
+          {on > 0 && <span className="ml-2 text-xs text-link">{on} on</span>}
+        </span>
+        <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+      </summary>
+      <div className="mt-3 space-y-4">
+        <div className="grid grid-cols-2 gap-2">
+          <Field label="Runtime">
+            <Select
+              value={o.framework_preset ?? "auto"}
+              onChange={(e) =>
+                set({
+                  framework_preset:
+                    e.target.value === "auto" ? undefined : (e.target.value as ServingOptions["framework_preset"]),
+                })
+              }
+            >
+              <option value="auto">Auto{autoRuntime ? ` (${RUNTIME_LABEL[autoRuntime] ?? autoRuntime})` : ""}</option>
+              {options(SERVING_RUNTIMES)}
+            </Select>
+          </Field>
+          <Field label="KV cache">
+            <Select
+              value={o.kv_cache_quantization ?? "auto"}
+              onChange={(e) => set({ kv_cache_quantization: e.target.value as ServingOptions["kv_cache_quantization"] })}
+            >
+              {options(KV_QUANTS)}
+            </Select>
+          </Field>
+        </div>
+        <OptimizationToggles
+          inference
+          enablePrefixCaching={!!o.enable_prefix_caching}
+          setEnablePrefixCaching={(v) => set({ enable_prefix_caching: v })}
+          sharedPrefixRatio={o.shared_prefix_ratio ?? 0.3}
+          setSharedPrefixRatio={(v) => set({ shared_prefix_ratio: v })}
+          enableSpeculative={!!o.enable_speculative_decoding}
+          setEnableSpeculative={(v) => set({ enable_speculative_decoding: v })}
+          specMethod={o.speculative_method ?? "draft"}
+          setSpecMethod={(v) => set({ speculative_method: v })}
+          specDraftTokens={o.speculative_draft_tokens ?? 4}
+          setSpecDraftTokens={(v) => set({ speculative_draft_tokens: v })}
+          specDraftParams={o.speculative_draft_model_params ?? 1.5}
+          setSpecDraftParams={(v) => set({ speculative_draft_model_params: v })}
+          specAcceptanceRate={o.speculative_acceptance_rate ?? 0.7}
+          setSpecAcceptanceRate={(v) => set({ speculative_acceptance_rate: v })}
+          enableOffloading={!!o.enable_offloading}
+          setEnableOffloading={(v) => set({ enable_offloading: v })}
+          offloadPercentage={Math.round((o.percentage_offload ?? 0.3) * 100)}
+          setOffloadPercentage={(v) => set({ percentage_offload: v / 100 })}
+          offloadKvCache={!!o.offload_kv_cache}
+          setOffloadKvCache={(v) => set({ offload_kv_cache: v })}
+          flashAttention={o.optimization_config?.flash_attention !== false}
+          setFlashAttention={(v) => set({ optimization_config: { flash_attention: v } })}
+        />
+      </div>
+    </details>
+  );
+}
+
 interface PoolPlannerProps {
   gpus: GpuSpec[];
   models: any[];
@@ -250,6 +349,12 @@ export function PoolPlanner({ gpus, models, pool, setPool, onOpenHfImport }: Poo
     setPool((p) => ({ ...p, nodes: p.nodes.map((n) => (n.id === id ? { ...n, ...patch } : n)) }));
   const updateModel = (id: string, patch: Partial<PoolConfig["models"][number]>) =>
     setPool((p) => ({ ...p, models: p.models.map((m) => (m.id === id ? { ...m, ...patch } : m)) }));
+  // Merges into the latest options: changing the speculative method sets three of them in a row.
+  const updateOptions = (id: string, patch: ServingOptions) =>
+    setPool((p) => ({
+      ...p,
+      models: p.models.map((m) => (m.id === id ? { ...m, options: { ...SERVING_DEFAULTS, ...m.options, ...patch } } : m)),
+    }));
 
   const addNode = () =>
     setPool((p) => {
@@ -433,11 +538,8 @@ export function PoolPlanner({ gpus, models, pool, setPool, onOpenHfImport }: Poo
                 </Field>
                 <Field label="Precision">
                   <Select value={m.quant} onChange={(e) => updateModel(m.id, { quant: e.target.value })}>
-                    {QUANTS.map(([v, l]) => (
-                      <option key={v} value={v}>
-                        {l}
-                      </option>
-                    ))}
+                    <option value="auto">Auto</option>
+                    <WeightOptions />
                   </Select>
                 </Field>
               </div>
@@ -473,6 +575,13 @@ export function PoolPlanner({ gpus, models, pool, setPool, onOpenHfImport }: Poo
                 nodes={pool.nodes}
                 setPin={(pin) => updateModel(m.id, { pin })}
               />
+              {!isEncoderTask(m.model) && (
+                <ModelOptions
+                  options={m.options}
+                  autoRuntime={plan?.placements.find((p) => p.modelId === m.id && !m.options?.framework_preset)?.runtime}
+                  set={(patch) => updateOptions(m.id, patch)}
+                />
+              )}
             </Block>
           ))}
         </Section>
@@ -704,6 +813,7 @@ export function PoolPlanner({ gpus, models, pool, setPool, onOpenHfImport }: Poo
                       memoryFraction: p.memoryFraction,
                       users: p.usersPerCopy,
                       contextLength: m.contextLength,
+                      ...servingOf(isEncoderTask(m.model) ? {} : (m.options ?? {}), m.model, p.quant, p.offloadedGb),
                       // Macs (llama.cpp) are one GPU each, and a copy spread over nodes can't be pinned with one variable.
                       devices:
                         p.runtime !== "llama_cpp" && gpus.every((g) => g.nodeId === gpus[0].nodeId)

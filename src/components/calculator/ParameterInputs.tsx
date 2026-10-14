@@ -65,6 +65,80 @@ export const SPEC_METHODS: Record<SpecMethod, { label: string; tokens: number; a
 };
 const pct = (n: number) => `${n}%`;
 
+export const WEIGHT_QUANTS: [string, [string, string][]][] = [
+  [
+    "16 and 32-bit",
+    [
+      ["fp16", "FP16 / BF16"],
+      ["fp32", "FP32"],
+    ],
+  ],
+  [
+    "8-bit",
+    [
+      ["fp8", "FP8"],
+      ["int8", "INT8 (bitsandbytes)"],
+      ["q8_0", "GGUF Q8_0 (8.5 bpw)"],
+    ],
+  ],
+  [
+    "5 and 6-bit",
+    [
+      ["q6_k", "GGUF Q6_K (6.6 bpw)"],
+      ["q5_k_m", "GGUF Q5_K_M (5.7 bpw)"],
+      ["q5_k_s", "GGUF Q5_K_S (5.5 bpw)"],
+    ],
+  ],
+  [
+    "4-bit",
+    [
+      ["nvfp4", "NVFP4 (Blackwell)"],
+      ["mxfp4", "MXFP4"],
+      ["awq", "AWQ"],
+      ["gptq", "GPTQ"],
+      ["q4_k_m", "GGUF Q4_K_M (4.8 bpw)"],
+      ["q4_k_s", "GGUF Q4_K_S (4.6 bpw)"],
+      ["exl2", "EXL2 (4.5 bpw)"],
+      ["int4", "INT4 (bitsandbytes)"],
+    ],
+  ],
+  [
+    "2 and 3-bit",
+    [
+      ["q3_k_m", "GGUF Q3_K_M (3.9 bpw)"],
+      ["q2_k", "GGUF Q2_K (2.9 bpw)"],
+    ],
+  ],
+];
+export const KV_QUANTS: [string, string][] = [
+  ["auto", "Runtime default"],
+  ["fp16", "FP16"],
+  ["fp8", "FP8 (half the memory)"],
+  ["int8", "INT8"],
+  ["int4", "INT4 (quarter the memory)"],
+];
+export const SERVING_RUNTIMES: [string, string][] = [
+  ["vllm", "vLLM"],
+  ["sglang", "SGLang"],
+  ["tensorrt_llm", "TensorRT-LLM"],
+  ["llama_cpp", "llama.cpp"],
+  ["ollama", "Ollama"],
+  ["hf_transformers", "Hugging Face Transformers"],
+  ["generic", "Generic"],
+];
+export const options = (list: [string, string][]) =>
+  list.map(([v, l]) => (
+    <option key={v} value={v}>
+      {l}
+    </option>
+  ));
+export const WeightOptions = () =>
+  WEIGHT_QUANTS.map(([group, list]) => (
+    <optgroup key={group} label={group}>
+      {options(list)}
+    </optgroup>
+  ));
+
 interface ParameterInputsProps {
   /** Opens the quantization guide (memory saved and quality cost of each format). */
   onOpenScorecard: () => void;
@@ -148,44 +222,13 @@ export function ParameterInputs(p: ParameterInputsProps) {
           <div className={encoder ? "grid gap-3" : "grid gap-3 sm:grid-cols-[1.4fr_1fr]"}>
             <Field label="Model weights">
               <Select value={p.quantization} onChange={(e) => p.setQuantization(e.target.value)}>
-                <optgroup label="16 and 32-bit">
-                  <option value="fp16">FP16 / BF16</option>
-                  <option value="fp32">FP32</option>
-                </optgroup>
-                <optgroup label="8-bit">
-                  <option value="fp8">FP8</option>
-                  <option value="int8">INT8 (bitsandbytes)</option>
-                  <option value="q8_0">GGUF Q8_0 (8.5 bpw)</option>
-                </optgroup>
-                <optgroup label="5 and 6-bit">
-                  <option value="q6_k">GGUF Q6_K (6.6 bpw)</option>
-                  <option value="q5_k_m">GGUF Q5_K_M (5.7 bpw)</option>
-                  <option value="q5_k_s">GGUF Q5_K_S (5.5 bpw)</option>
-                </optgroup>
-                <optgroup label="4-bit">
-                  <option value="nvfp4">NVFP4 (Blackwell)</option>
-                  <option value="mxfp4">MXFP4</option>
-                  <option value="awq">AWQ</option>
-                  <option value="gptq">GPTQ</option>
-                  <option value="q4_k_m">GGUF Q4_K_M (4.8 bpw)</option>
-                  <option value="q4_k_s">GGUF Q4_K_S (4.6 bpw)</option>
-                  <option value="exl2">EXL2 (4.5 bpw)</option>
-                  <option value="int4">INT4 (bitsandbytes)</option>
-                </optgroup>
-                <optgroup label="2 and 3-bit">
-                  <option value="q3_k_m">GGUF Q3_K_M (3.9 bpw)</option>
-                  <option value="q2_k">GGUF Q2_K (2.9 bpw)</option>
-                </optgroup>
+                <WeightOptions />
               </Select>
             </Field>
             {!encoder && (
               <Field label="KV cache">
                 <Select value={p.kvCacheQuant} onChange={(e) => p.setKvCacheQuant(e.target.value)}>
-                  <option value="auto">Runtime default</option>
-                  <option value="fp16">FP16</option>
-                  <option value="fp8">FP8 (half the memory)</option>
-                  <option value="int8">INT8</option>
-                  <option value="int4">INT4 (quarter the memory)</option>
+                  {options(KV_QUANTS)}
                 </Select>
               </Field>
             )}
@@ -322,15 +365,7 @@ export function ParameterInputs(p: ParameterInputsProps) {
           <Field label="Runtime">
             <Select value={p.frameworkPreset} onChange={(e) => p.setFrameworkPreset(e.target.value)}>
               {inference ? (
-                <>
-                  <option value="vllm">vLLM</option>
-                  <option value="sglang">SGLang</option>
-                  <option value="tensorrt_llm">TensorRT-LLM</option>
-                  <option value="llama_cpp">llama.cpp</option>
-                  <option value="ollama">Ollama</option>
-                  <option value="hf_transformers">Hugging Face Transformers</option>
-                  <option value="generic">Generic</option>
-                </>
+                options(SERVING_RUNTIMES)
               ) : (
                 <>
                   <option value="unsloth">Unsloth</option>
@@ -354,95 +389,6 @@ export function ParameterInputs(p: ParameterInputsProps) {
             <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180" />
           </summary>
           <div className="space-y-5 px-4 pb-5 sm:px-5">
-            {inference && (
-              <>
-                <ToggleRow
-                  title="Prefix caching"
-                  description="Reuse the KV cache of a shared system prompt across users."
-                  checked={p.enablePrefixCaching}
-                  onCheckedChange={p.setEnablePrefixCaching}
-                >
-                  <StepSlider
-                    label="Shared prefix"
-                    steps={PERCENT_STEPS}
-                    value={Math.round(p.sharedPrefixRatio * 100)}
-                    onChange={(v) => p.setSharedPrefixRatio(v / 100)}
-                    format={pct}
-                    unit="%"
-                  />
-                </ToggleRow>
-                <ToggleRow
-                  title="Speculative decoding"
-                  description="Guess several tokens cheaply, check them in one pass; typically 1.5 to 3× faster for few users."
-                  checked={p.enableSpeculative}
-                  onCheckedChange={p.setEnableSpeculative}
-                >
-                  <Field label="Method" hint={SPEC_METHODS[p.specMethod].note}>
-                    <Select
-                      value={p.specMethod}
-                      onChange={(e) => {
-                        const m = e.target.value as SpecMethod;
-                        p.setSpecMethod(m);
-                        p.setSpecDraftTokens(SPEC_METHODS[m].tokens);
-                        p.setSpecAcceptanceRate(SPEC_METHODS[m].acceptance);
-                      }}
-                    >
-                      {Object.entries(SPEC_METHODS).map(([v, m]) => (
-                        <option key={v} value={v}>
-                          {m.label}
-                        </option>
-                      ))}
-                    </Select>
-                  </Field>
-                  {p.specMethod === "draft" && (
-                    <Field label="Draft model size (billions of parameters)">
-                      <Input
-                        type="number"
-                        min={0.1}
-                        step={0.5}
-                        value={p.specDraftParams}
-                        onChange={(e) => p.setSpecDraftParams(Number(e.target.value))}
-                      />
-                    </Field>
-                  )}
-                  <StepSlider
-                    label="Tokens drafted per step"
-                    steps={DRAFT_TOKEN_STEPS}
-                    value={p.specDraftTokens}
-                    onChange={p.setSpecDraftTokens}
-                  />
-                  <StepSlider
-                    label="Acceptance rate"
-                    steps={ACCEPT_STEPS}
-                    value={Math.round(p.specAcceptanceRate * 100)}
-                    onChange={(v) => p.setSpecAcceptanceRate(v / 100)}
-                    format={pct}
-                    unit="%"
-                  />
-                </ToggleRow>
-              </>
-            )}
-            <ToggleRow
-              title="Offload to CPU memory"
-              description="Keep some layers in system RAM to run models larger than VRAM, at a speed cost."
-              checked={p.enableOffloading}
-              onCheckedChange={p.setEnableOffloading}
-            >
-              <StepSlider
-                label="Layers offloaded"
-                steps={PERCENT_STEPS}
-                value={p.offloadPercentage}
-                onChange={p.setOffloadPercentage}
-                format={pct}
-                unit="%"
-              />
-              <ToggleRow
-                title="Offload KV cache too"
-                description="Moves most of the KV cache to system RAM."
-                checked={p.offloadKvCache}
-                onCheckedChange={p.setOffloadKvCache}
-              />
-            </ToggleRow>
             {!inference && (
               <ToggleRow
                 title="Gradient checkpointing"
@@ -451,19 +397,144 @@ export function ParameterInputs(p: ParameterInputsProps) {
                 onCheckedChange={p.setGradCheckpointing}
               />
             )}
-            <ToggleRow
-              title="Flash attention"
-              description={
-                inference
-                  ? "Fused attention kernels. Without them llama.cpp, Ollama and Transformers build the full attention matrix."
-                  : "Memory-efficient attention kernels (FlashAttention 2 or 3)."
-              }
-              checked={p.flashAttention}
-              onCheckedChange={p.setFlashAttention}
-            />
+            <OptimizationToggles {...p} inference={inference} />
           </div>
         </details>
       )}
+    </>
+  );
+}
+
+type OptimizationProps = Pick<
+  ParameterInputsProps,
+  | "enablePrefixCaching"
+  | "setEnablePrefixCaching"
+  | "sharedPrefixRatio"
+  | "setSharedPrefixRatio"
+  | "enableSpeculative"
+  | "setEnableSpeculative"
+  | "specMethod"
+  | "setSpecMethod"
+  | "specDraftTokens"
+  | "setSpecDraftTokens"
+  | "specDraftParams"
+  | "setSpecDraftParams"
+  | "specAcceptanceRate"
+  | "setSpecAcceptanceRate"
+  | "enableOffloading"
+  | "setEnableOffloading"
+  | "offloadPercentage"
+  | "setOffloadPercentage"
+  | "offloadKvCache"
+  | "setOffloadKvCache"
+  | "flashAttention"
+  | "setFlashAttention"
+> & { inference: boolean };
+
+/** Prefix caching, speculative decoding, offloading and flash attention; also used per model in the Advanced view. */
+export function OptimizationToggles(p: OptimizationProps) {
+  const inference = p.inference;
+  return (
+    <>
+      {inference && (
+        <>
+          <ToggleRow
+            title="Prefix caching"
+            description="Reuse the KV cache of a shared system prompt across users."
+            checked={p.enablePrefixCaching}
+            onCheckedChange={p.setEnablePrefixCaching}
+          >
+            <StepSlider
+              label="Shared prefix"
+              steps={PERCENT_STEPS}
+              value={Math.round(p.sharedPrefixRatio * 100)}
+              onChange={(v) => p.setSharedPrefixRatio(v / 100)}
+              format={pct}
+              unit="%"
+            />
+          </ToggleRow>
+          <ToggleRow
+            title="Speculative decoding"
+            description="Guess several tokens cheaply, check them in one pass; typically 1.5 to 3× faster for few users."
+            checked={p.enableSpeculative}
+            onCheckedChange={p.setEnableSpeculative}
+          >
+            <Field label="Method" hint={SPEC_METHODS[p.specMethod].note}>
+              <Select
+                value={p.specMethod}
+                onChange={(e) => {
+                  const m = e.target.value as SpecMethod;
+                  p.setSpecMethod(m);
+                  p.setSpecDraftTokens(SPEC_METHODS[m].tokens);
+                  p.setSpecAcceptanceRate(SPEC_METHODS[m].acceptance);
+                }}
+              >
+                {Object.entries(SPEC_METHODS).map(([v, m]) => (
+                  <option key={v} value={v}>
+                    {m.label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            {p.specMethod === "draft" && (
+              <Field label="Draft model size (billions of parameters)">
+                <Input
+                  type="number"
+                  min={0.1}
+                  step={0.5}
+                  value={p.specDraftParams}
+                  onChange={(e) => p.setSpecDraftParams(Number(e.target.value))}
+                />
+              </Field>
+            )}
+            <StepSlider
+              label="Tokens drafted per step"
+              steps={DRAFT_TOKEN_STEPS}
+              value={p.specDraftTokens}
+              onChange={p.setSpecDraftTokens}
+            />
+            <StepSlider
+              label="Acceptance rate"
+              steps={ACCEPT_STEPS}
+              value={Math.round(p.specAcceptanceRate * 100)}
+              onChange={(v) => p.setSpecAcceptanceRate(v / 100)}
+              format={pct}
+              unit="%"
+            />
+          </ToggleRow>
+        </>
+      )}
+      <ToggleRow
+        title="Offload to CPU memory"
+        description="Keep some layers in system RAM to run models larger than VRAM, at a speed cost."
+        checked={p.enableOffloading}
+        onCheckedChange={p.setEnableOffloading}
+      >
+        <StepSlider
+          label="Layers offloaded"
+          steps={PERCENT_STEPS}
+          value={p.offloadPercentage}
+          onChange={p.setOffloadPercentage}
+          format={pct}
+          unit="%"
+        />
+        <ToggleRow
+          title="Offload KV cache too"
+          description="Moves most of the KV cache to system RAM."
+          checked={p.offloadKvCache}
+          onCheckedChange={p.setOffloadKvCache}
+        />
+      </ToggleRow>
+      <ToggleRow
+        title="Flash attention"
+        description={
+          inference
+            ? "Fused attention kernels. Without them llama.cpp, Ollama and Transformers build the full attention matrix."
+            : "Memory-efficient attention kernels (FlashAttention 2 or 3)."
+        }
+        checked={p.flashAttention}
+        onCheckedChange={p.setFlashAttention}
+      />
     </>
   );
 }

@@ -5,6 +5,7 @@ import { Check, Copy } from "lucide-react";
 import { CalculatorInput, CalculatorOutput, GpuSpec, ModelVariant, SpecMethod } from "@/lib/calculator/types";
 import { geometry, isEncoderTask, weightBytes } from "@/lib/calculator/engine";
 import { Button } from "@/components/ui/button";
+import type { ServingOptions } from "@/lib/calculator/planner";
 import { Section } from "./controls";
 
 /*
@@ -75,6 +76,22 @@ const SPEC_PHRASES: Record<SpecMethod, string> = {
   suffix: "suffix decoding",
 };
 const GGUF_KV: Record<string, string> = { int8: "q8_0", fp8: "q8_0", int4: "q4_0" };
+
+/** The launch settings that come from the serving options; offloadedGb is per copy, weights first, then KV cache. */
+export function servingOf(o: ServingOptions, model: ModelVariant, quant: string, offloadedGb: number) {
+  const fraction = o.enable_offloading ? (o.percentage_offload ?? 0.3) : 0;
+  return {
+    kvQuant: o.kv_cache_quantization,
+    spec:
+      o.enable_speculative_decoding && !isEncoderTask(model)
+        ? { method: o.speculative_method ?? "draft", tokens: o.speculative_draft_tokens ?? 4 }
+        : undefined,
+    flash: o.optimization_config?.flash_attention,
+    offload: fraction
+      ? { fraction, kvGb: Math.max(0, offloadedGb - (weightBytes(geometry(model), quant) * fraction) / GiB) }
+      : undefined,
+  };
+}
 
 /** Shell command for one copy (null for runtimes without a standard server), plus what the user has to fill in. */
 export function launch(model: ModelVariant, l: Launch): { cmd: string | null; notes: string[] } {
@@ -475,15 +492,12 @@ export function RunSection({ input, gpu, output }: { input: CalculatorInput; gpu
   const span = Math.ceil(perCopy / perMachine);
   const here = Math.max(1, Math.floor(perMachine / perCopy));
   const users = encoder ? input.batch_size : Math.ceil((input.concurrent_users ?? 1) / output.replicas);
-  const fraction = input.enable_offloading ? (input.percentage_offload ?? 0.3) : 0;
-  // offloaded_memory is per copy: weights first, the rest is KV cache.
-  const kvGb = fraction ? Math.max(0, output.offloaded_memory - (weightBytes(geometry(model), quant) * fraction) / GiB) : 0;
 
   const launches = Array.from({ length: here }, (_, c) =>
     launch(model, {
       runtime,
       quant,
-      kvQuant: input.kv_cache_quantization,
+      ...servingOf(input, model, quant, output.offloaded_memory),
       tp,
       pp,
       machines: span,
@@ -491,12 +505,6 @@ export function RunSection({ input, gpu, output }: { input: CalculatorInput; gpu
       contextLength: input.seq_length,
       devices: here > 1 && !apple ? Array.from({ length: perCopy }, (_, i) => c * perCopy + i) : null,
       copy: here > 1 ? c : null,
-      spec:
-        input.enable_speculative_decoding && !encoder
-          ? { method: input.speculative_method ?? "draft", tokens: input.speculative_draft_tokens ?? 4 }
-          : undefined,
-      flash: input.optimization_config?.flash_attention,
-      offload: fraction ? { fraction, kvGb } : undefined,
     }),
   );
 

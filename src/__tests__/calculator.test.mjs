@@ -142,6 +142,7 @@ const fake = (i) => {
     gpu_count: n,
     memory_status: perGpu > 24 ? "insufficient" : "okay",
     memory_details: { "KV Cache": 0.5 * n },
+    offloaded_memory: 0,
     per_user_tps: (100 * n) / i.concurrent_users,
     estimated_throughput_tps: 100 * n,
     ttft_ms: 100,
@@ -213,6 +214,15 @@ test("planPool: a pinned copy count is kept, each copy on its own GPUs", () => {
   const p = plan.placements[0];
   assert.equal(p.copies.length, 3);
   assert.equal(new Set(p.gpus.map((g) => g.index)).size, p.gpus.length, "no GPU shared between copies");
+});
+
+test("planPool: a model's serving options reach the engine, and its picked runtime replaces the GPU's", () => {
+  const seen = [];
+  const spy = (i) => (seen.push(i), fake(i));
+  const options = { framework_preset: "sglang", enable_speculative_decoding: true, kv_cache_quantization: "fp8" };
+  const plan = planPool({ network: "ethernet100g", nodes: node(1), models: [pm("m", 4, { options })] }, g24, spy);
+  assert.equal(plan.placements[0].runtime, "sglang");
+  assert.ok(seen.every((i) => i.framework_preset === "sglang" && i.enable_speculative_decoding && i.kv_cache_quantization === "fp8"));
 });
 
 test("launch: one copy per GPU group, with its own devices and port", () => {
