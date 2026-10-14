@@ -46,6 +46,8 @@ const SERVING_DEFAULTS: ServingOptions = {
 const USER_STEPS = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512];
 
 const newId = () => Math.random().toString(36).slice(2, 9);
+/** The memory that grows with load: KV cache for chat models, the batch's activations for embedding and reranking models. */
+const loadGb = (p: Placement) => (p.itemsPerSecond != null ? p.activationsPerGpuGb : p.kvPerGpuGb);
 const round1 = (n: number) => Number(n.toFixed(1));
 
 /** Starting point: two models sharing a 2× RTX 4090 box. Fixed ids keep server and client renders identical. */
@@ -653,16 +655,13 @@ export function PoolPlanner({ gpus, models, pool, setPool, onOpenHfImport }: Poo
                             <div
                               key={p.modelId}
                               className="h-full shrink-0 transition-[width] duration-300"
-                              style={{
-                                width: `${((p.perGpuGb - p.kvPerGpuGb) / g.memory) * 100}%`,
-                                background: colorOf(p.modelId),
-                              }}
+                              style={{ width: `${((p.perGpuGb - loadGb(p)) / g.memory) * 100}%`, background: colorOf(p.modelId) }}
                             />,
-                            p.kvPerGpuGb > 0 && (
+                            loadGb(p) > 0 && (
                               <div
                                 key={`${p.modelId}-kv`}
                                 className="h-full shrink-0 opacity-50 transition-[width] duration-300"
-                                style={{ width: `${(p.kvPerGpuGb / g.memory) * 100}%`, background: colorOf(p.modelId) }}
+                                style={{ width: `${(loadGb(p) / g.memory) * 100}%`, background: colorOf(p.modelId) }}
                               />
                             ),
                           ])}
@@ -691,8 +690,9 @@ export function PoolPlanner({ gpus, models, pool, setPool, onOpenHfImport }: Poo
                                 <span className="ml-auto shrink-0 pl-2 text-heading">{round1(p.perGpuGb)} GB</span>
                               </div>
                               <div className="pl-4 text-muted-foreground">
-                                {round1(p.perGpuGb - p.kvPerGpuGb)} GB weights and runtime
-                                {p.kvPerGpuGb > 0 && `, ${round1(p.kvPerGpuGb)} GB KV cache`}
+                                {round1(p.perGpuGb - loadGb(p))} GB weights and runtime
+                                {loadGb(p) > 0 &&
+                                  `, ${round1(loadGb(p))} GB ${p.itemsPerSecond != null ? "activations for the batch" : "KV cache"}`}
                               </div>
                             </div>
                           ))}
@@ -708,7 +708,8 @@ export function PoolPlanner({ gpus, models, pool, setPool, onOpenHfImport }: Poo
               );
             })}
             <p className="text-xs text-muted-foreground">
-              Solid: weights and runtime. Lighter shade: KV cache. The thin line marks the runtime&apos;s reserve.
+              Solid: weights and runtime. Lighter shade: KV cache, or the batch&apos;s activations for embedding and reranking
+              models. The thin line marks the runtime&apos;s reserve.
             </p>
           </Section>
         )}
@@ -742,15 +743,20 @@ export function PoolPlanner({ gpus, models, pool, setPool, onOpenHfImport }: Poo
               const target = m.target?.minSpeed || m.target?.maxTtftMs ? m.target : null;
               // KV cache headroom: a tensor-parallel group grows evenly, so its tightest GPU sets the limit.
               const kvGb = p.kvPerGpuGb * p.gpus.length;
-              const freeGb =
-                Math.min(
-                  ...p.gpus.map((r) => {
-                    const g = plan.gpus.find((x) => x.nodeId === r.nodeId && x.index === r.index);
-                    return g ? Math.max(0, g.usable - g.used) : 0;
-                  }),
-                ) * p.gpus.length;
+              const freePerGpu = Math.min(
+                ...p.gpus.map((r) => {
+                  const g = plan.gpus.find((x) => x.nodeId === r.nodeId && x.index === r.index);
+                  return g ? Math.max(0, g.usable - g.used) : 0;
+                }),
+              );
+              const freeGb = freePerGpu * p.gpus.length;
               const gbPerUser = kvGb / m.users || 0;
               const moreUsers = gbPerUser > 0 ? Math.floor(freeGb / gbPerUser) : null;
+              // Embedding and reranking: each copy's batch grows into the free memory of its own GPUs.
+              const perCopy = p.tp * p.pp;
+              const gbPerItem = (p.activationsPerGpuGb * perCopy) / p.usersPerCopy || 0;
+              const maxBatch = gbPerItem > 0 ? p.usersPerCopy + Math.floor((freePerGpu * perCopy) / gbPerItem) : null;
+              const items = p.task === "reranking" ? "pairs" : "inputs";
               return (
                 <div key={m.id} className="space-y-3 rounded-lg border p-3 sm:p-4">
                   <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
@@ -820,6 +826,27 @@ export function PoolPlanner({ gpus, models, pool, setPool, onOpenHfImport }: Poo
                         ? `, room for about ${moreUsers.toLocaleString()} more ${moreUsers === 1 ? "user" : "users"} at this context`
                         : ", not enough for another user at this context"}
                       {p.runtime === "vllm" && moreUsers ? " (raise --gpu-memory-utilization to use it)." : "."}
+                    </p>
+                  )}
+                  {p.itemsPerSecond != null && (
+                    <p className="text-[13px] text-muted-foreground">
+                      Weights{" "}
+                      <span className="tabular-nums text-heading">
+                        <Num value={p.weightsPerGpuGb * perCopy} digits={2} /> GB
+                      </span>
+                      {p.copies.length > 1 && " per copy"}, activations{" "}
+                      <span className="tabular-nums text-heading">
+                        <Num value={p.activationsPerGpuGb * perCopy} digits={2} /> GB
+                      </span>{" "}
+                      for batches of {p.usersPerCopy} {items} of {formatTokens(m.contextLength)} tokens, and no KV cache: each
+                      input is read in one pass.{" "}
+                      <span className="tabular-nums text-heading">
+                        <Num value={freeGb} /> GB
+                      </span>{" "}
+                      still free on its GPUs
+                      {maxBatch != null && maxBatch > p.usersPerCopy
+                        ? `, room for batches of about ${maxBatch.toLocaleString()} ${items} at this length.`
+                        : "."}
                     </p>
                   )}
                   {target && (

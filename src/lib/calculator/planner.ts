@@ -87,6 +87,9 @@ export interface Placement {
   perGpuGb: number;
   /** Part of perGpuGb that is KV cache (0 for embedding/reranking models). */
   kvPerGpuGb: number;
+  /** Parts of perGpuGb that are weights, and activations (what an embedding model's batch takes). */
+  weightsPerGpuGb: number;
+  activationsPerGpuGb: number;
   /** Weights and KV cache kept in CPU memory, per copy (GB). */
   offloadedGb: number;
   /** Share of each GPU's memory to hand this model, e.g. vLLM --gpu-memory-utilization. */
@@ -218,6 +221,8 @@ export function planPool(config: PoolConfig, gpuSpecs: GpuSpec[], evaluate: Eval
     gpus: copies.flat(),
     perGpuGb: round(r.perGpu),
     kvPerGpuGb: round(r.kvPerGpu),
+    weightsPerGpuGb: round((r.out.memory_details["Model Weights"] ?? 0) / r.out.gpu_count),
+    activationsPerGpuGb: round((r.out.memory_details["Activations"] ?? 0) / r.out.gpu_count),
     offloadedGb: round(r.out.offloaded_memory),
     memoryFraction: Math.min(0.99, Math.ceil((r.perGpu / node.gpu.memory) * 100 + 1) / 100),
     usersPerCopy: Math.ceil(m.users / copies.length),
