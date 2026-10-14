@@ -356,3 +356,16 @@ test("Speed predictions stay close to published benchmarks", () => {
     );
   }
 });
+
+test("GPU catalog lists each vendor's cards newest first", () => {
+  for (const keys of [
+    ["5090_32", "4090_24", "3090_24", "2080ti_11", "2060_6"],
+    ["b200_180", "h100_80", "a100_80", "t4_16", "v100_32"],
+    ["rx_9070xt_16", "rx_7900xtx_24", "rx_6900xt_16"],
+    ["m5_32", "m4_max_128", "m3_ultra_512", "m2_ultra_192", "m1_8"],
+    ["arc_b580_12", "arc_a770_16"],
+  ]) {
+    const at = keys.map((k) => gpus.findIndex((g) => g.key === k));
+    assert.ok(at.every((i, n) => i >= 0 && (n === 0 || i > at[n - 1])), keys.join(" before "));
+  }
+});
