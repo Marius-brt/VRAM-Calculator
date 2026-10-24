@@ -1,28 +1,62 @@
 #!/usr/bin/env bash
-# Measures a model on your hardware and writes report.md to paste into a GitHub issue, so the VRAM Calculator's
-# speed estimates can be checked and fitted against it:
-# https://github.com/Marius-brt/VRAM-Calculator/issues/new?template=benchmark.yml
-#
-#   bash benchmark.sh                                    a vLLM server on http://localhost:8000
-#   bash benchmark.sh --docker vllm-server-1 --users 12  vLLM inside a Docker container, 12 users at once
-#   bash benchmark.sh --unsloth --api-key <key>          an `unsloth run` server on http://localhost:8888
-#   bash benchmark.sh --gguf model.gguf                  llama.cpp's llama-bench on a GGUF file
-#
-# Options:
-#   --url URL        the server as seen from where it runs (inside the container with --docker); default
-#                    http://localhost:8000, or http://localhost:8888 with --unsloth
-#   --users N        concurrent users for the second run, e.g. your --max-num-seqs or --parallel; default 8
-#   --docker NAME    run everything inside this container (docker ps shows the name)
-#   --unsloth        benchmark an `unsloth run` server instead of a vLLM server
-#   --api-key KEY    the API key `unsloth run` printed (or set BENCH_API_KEY); never written to the report
-#   --model ID       with --unsloth, the model to benchmark; default the one it has loaded
-#   --gguf FILE      benchmark a GGUF file with llama-bench instead of a server
-#
-# vLLM runs use `vllm bench serve` against the running server; Unsloth runs use a small Python client that streams
-# chat completions. Neither loads anything on the GPUs. Prompts are random, 1,500 tokens in and 500 out; speculative
-# decoding accepts fewer drafts on random text than on real chats, and vLLM's report includes how many it accepted.
-# Run it when nothing else uses the GPUs.
+# Benchmarks a model on this machine for the VRAM Calculator: a vLLM or Unsloth server, or a GGUF file with
+# llama-bench. `bash benchmark.sh --help` explains the modes and options.
 set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: bash benchmark.sh [--unsloth | --gguf FILE] [options]
+
+Measures how fast a model runs on this machine and writes report.md. Paste
+the report into a benchmark issue so the VRAM Calculator's speed estimates
+can be checked against your hardware:
+https://github.com/Marius-brt/VRAM-Calculator/issues/new?template=benchmark.yml
+
+Start the server with the model you want first, and run this while nothing
+else uses the GPUs. It only sends requests; it loads nothing on the GPUs.
+
+vLLM (the default)
+  Benchmarks a running vLLM server with `vllm bench serve`.
+
+    bash benchmark.sh
+    bash benchmark.sh --users 12
+    bash benchmark.sh --docker vllm-server-1
+
+  --url URL       server address (default http://localhost:8000)
+
+Unsloth
+  Benchmarks a running `unsloth run` server with a built-in Python client,
+  so vLLM doesn't need to be installed.
+
+    bash benchmark.sh --unsloth --api-key KEY
+    bash benchmark.sh --unsloth --api-key KEY --model unsloth/Qwen3-8B-GGUF
+
+  --unsloth       benchmark Unsloth instead of vLLM
+  --api-key KEY   the key `unsloth run` printed when it started (or set
+                  BENCH_API_KEY); it never goes into the report
+  --model ID      model to benchmark (default: the one Unsloth has loaded)
+  --url URL       server address (default http://localhost:8888)
+
+llama.cpp
+  Runs llama-bench on a GGUF file: a 512-token prompt, then 128 tokens.
+
+    bash benchmark.sh --gguf model.gguf
+
+  --gguf FILE     the GGUF file to benchmark
+
+Common options
+  --users N       users at once in a server's second run (default 8);
+                  match vLLM's --max-num-seqs or Unsloth's --parallel
+  --docker NAME   run everything inside this Docker container (docker ps
+                  shows the name); --url is then as seen from inside it
+  -h, --help      show this help
+
+What a server run sends
+  Random prompts of 1,500 tokens, asking for 500 back: 20 requests from one
+  user, then 10 per user from N users at once. Speculative decoding accepts
+  fewer drafts on random text than on real chats.
+EOF
+}
 
 URL=
 USERS=8
@@ -30,17 +64,19 @@ DOCKER=
 GGUF=
 UNSLOTH=
 MODEL=
+# Options that take a value: stop with a clear message when it's missing.
+need() { [ $# -ge 2 ] || { echo "$1 needs a value. See: bash benchmark.sh --help" >&2; exit 1; }; }
 while [ $# -gt 0 ]; do
   case $1 in
-    --url) URL=$2; shift 2 ;;
-    --users) USERS=$2; shift 2 ;;
-    --docker) DOCKER=$2; shift 2 ;;
+    --url) need "$@"; URL=$2; shift 2 ;;
+    --users) need "$@"; USERS=$2; shift 2 ;;
+    --docker) need "$@"; DOCKER=$2; shift 2 ;;
     --unsloth) UNSLOTH=1; shift ;;
-    --api-key) BENCH_API_KEY=$2; shift 2 ;;
-    --model) MODEL=$2; shift 2 ;;
-    --gguf) GGUF=$2; shift 2 ;;
-    -h | --help) sed -n '2,24p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
-    *) echo "Unknown option: $1 (see --help)" >&2; exit 1 ;;
+    --api-key) need "$@"; BENCH_API_KEY=$2; shift 2 ;;
+    --model) need "$@"; MODEL=$2; shift 2 ;;
+    --gguf) need "$@"; GGUF=$2; shift 2 ;;
+    -h | --help) usage; exit 0 ;;
+    *) echo "Unknown option: $1. See: bash benchmark.sh --help" >&2; exit 1 ;;
   esac
 done
 URL=${URL:-http://localhost:$([ -n "$UNSLOTH" ] && echo 8888 || echo 8000)}
