@@ -133,6 +133,7 @@ export const SERVING_RUNTIMES: [string, string][] = [
   ["tensorrt_llm", "TensorRT-LLM"],
   ["llama_cpp", "llama.cpp"],
   ["ollama", "Ollama"],
+  ["unsloth", "Unsloth"],
   ["hf_transformers", "Hugging Face Transformers"],
   ["generic", "Generic"],
 ];

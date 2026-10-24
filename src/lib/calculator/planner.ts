@@ -126,6 +126,7 @@ export const QUANT_LADDER: Record<string, string[]> = {
   vllm: ["fp16", "fp8", "awq"],
   llama_cpp: ["fp16", "q8_0", "q4_k_m"],
   ollama: ["fp16", "q8_0", "q4_k_m"],
+  unsloth: ["fp16", "q8_0", "q4_k_m"],
   hf_transformers: ["fp16", "int8", "int4"],
   tei: ["fp16"],
 };

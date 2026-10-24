@@ -266,6 +266,39 @@ test("launch: speculative decoding and offloading map to each runtime's flags, o
   assert.match(offload, /--cpu-offload-gb 8 --kv-offloading-size 3 --kv-offloading-backend native/);
 });
 
+test("launch: Unsloth runs GGUF files on llama-server and other formats on its loader or vLLM", () => {
+  const llama = model("llama-3-1-8b-instruct");
+  const base = { runtime: "unsloth", tp: 1, pp: 1, users: 4, contextLength: 8192, devices: null, copy: null };
+  const gguf = launch(llama, { ...base, quant: "q4_k_m", kvQuant: "int8", spec: { method: "mtp", tokens: 3 } });
+  assert.equal(
+    gguf.cmd,
+    "unsloth run --model unsloth/Llama-3.1-8B-Instruct-GGUF --gguf-variant Q4_K_M --context-length 32768 --parallel 4" +
+      " -fa on -ctk q8_0 -ctv q8_0 --speculative-type mtp --spec-draft-n-max 3",
+  );
+  const repo = llama.hf_repo_id;
+  assert.equal(launch(llama, { ...base, quant: "int4" }).cmd, `unsloth run --model ${repo} --load-in-4bit --context-length 8192`);
+  const fp8 = launch(llama, { ...base, quant: "fp8", spec: { method: "mtp", tokens: 3 } });
+  assert.equal(fp8.cmd, `unsloth run --model ${repo} --engine vllm --engine-precision fp8 --context-length 8192`);
+  assert.ok(fp8.notes.some((n) => n.includes("only runs speculative decoding with GGUF files")));
+});
+
+test("Unsloth takes llama.cpp's constants for GGUF files and Transformers' for its own loader", () => {
+  const run = (quant, preset) => {
+    const out = infer("llama-3-1-8b-instruct", "4090_24", { quantization: quant, framework_preset: preset });
+    return [out.per_gpu_usage, out.estimated_latency_tps];
+  };
+  const same = (quant, backend) => assert.deepEqual(run(quant, "unsloth"), run(quant, backend), `${quant}: ${backend}`);
+  same("q4_k_m", "llama_cpp");
+  same("fp16", "hf_transformers");
+  same("fp8", "vllm");
+  const busy = infer("llama-3-1-8b-instruct", "4090_24", {
+    quantization: "int4",
+    framework_preset: "unsloth",
+    concurrent_users: 4,
+  });
+  assert.ok(busy.warnings.some((w) => w.includes("one request at a time")));
+});
+
 test("trainCommand: TRL with ZeRO-3 over 4 GPUs", () => {
   const cmd = trainCommand({
     calc_mode: "finetuning",

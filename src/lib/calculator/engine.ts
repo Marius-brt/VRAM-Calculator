@@ -103,6 +103,15 @@ export function runtimeFor(name: string, gpu: GpuSpec): Runtime {
   return { ...RUNTIMES[key], ...FITTED[key]?.all, ...FITTED[key]?.[gpuClass(gpu)] };
 }
 
+/** Unsloth's own 4-bit and 16-bit loader; other formats go to vLLM (`unsloth run --engine vllm`). */
+export const UNSLOTH_LOADER = new Set(["fp16", "bf16", "fp32", "int4"]);
+/**
+ * The runtime that does the work. `unsloth run` serves GGUF files with llama-server, 16-bit and 4-bit checkpoints
+ * with its Transformers-based loader and other formats with vLLM, so it takes their constants.
+ */
+export const backendOf = (preset: string, quant: string) =>
+  preset !== "unsloth" ? preset : isGguf(quant) ? "llama_cpp" : UNSLOTH_LOADER.has(quant) ? "hf_transformers" : "vllm";
+
 /** GPU-to-GPU links: bandwidth per direction (GB/s) and all-reduce latency (µs). */
 export const LINKS: Record<string, { gbps: number; us: number }> = {
   nvlink_gen6: { gbps: 1800, us: 4 },
@@ -317,7 +326,8 @@ function inference(input: CalculatorInput, gpu: GpuSpec): CalculatorOutput {
   const m = input.model_variant;
   const g = geometry(m);
   const quant = (input.quantization || "fp16").toLowerCase();
-  const runtime = runtimeFor(input.framework_preset ?? "vllm", gpu);
+  const backend = backendOf(input.framework_preset ?? "vllm", quant);
+  const runtime = runtimeFor(backend, gpu);
   const warnings: string[] = [];
 
   const tp = Math.max(1, Math.round(input.tp_degree || 1));
@@ -334,6 +344,8 @@ function inference(input: CalculatorInput, gpu: GpuSpec): CalculatorOutput {
   if (m.context_length && seq > m.context_length)
     warnings.push(`Context is longer than the model's ${m.context_length.toLocaleString()} tokens.`);
   if (tp > 1 && g.heads % tp !== 0) warnings.push(`${g.heads} attention heads don't split evenly over tensor parallel ${tp}.`);
+  if (input.framework_preset === "unsloth" && backend === "hf_transformers" && seqs > 1)
+    warnings.push("Unsloth's own loader answers one request at a time; a GGUF format serves several users at once.");
 
   // ── Memory per GPU of one copy
   const wBytes = weightBytes(g, quant);
@@ -356,7 +368,7 @@ function inference(input: CalculatorInput, gpu: GpuSpec): CalculatorOutput {
   // Without fused attention kernels the full score matrix of a prefill chunk is materialized (FP32).
   const eagerAttention =
     input.optimization_config?.flash_attention === false &&
-    ["llama_cpp", "ollama", "hf_transformers", "generic"].includes(input.framework_preset ?? "vllm");
+    ["llama_cpp", "ollama", "hf_transformers", "generic"].includes(backend);
   const scoresGpu = eagerAttention ? (chunk * seq * g.heads * 4) / tp / pp : 0;
 
   const draftTokens = n(input.speculative_draft_tokens, 4);

@@ -10,7 +10,7 @@ Check whether an LLM fits on your GPUs, how fast it will run, and get the comman
 
 - **Fit and speed**: memory part by part, speed per user and in total, time to first token and how many users fit,
   for more than 650 models on 200 GPUs from NVIDIA, AMD, Apple and Intel, or any model imported from Hugging Face.
-- **Launch command**: ready to paste for vLLM, SGLang, TensorRT-LLM, llama.cpp, Ollama, Transformers or TEI, with
+- **Launch command**: ready to paste for vLLM, SGLang, TensorRT-LLM, llama.cpp, Ollama, Unsloth, Transformers or TEI, with
   speculative decoding, CPU offloading and KV cache precision.
 - **Fine-tuning**: full, LoRA and QLoRA, with ZeRO and offloading, and the Unsloth, TRL or torchtune command.
 - **Find models and Find hardware**: every model that fits your GPUs, or the cheapest GPUs that run a model.

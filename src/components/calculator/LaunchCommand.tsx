@@ -3,14 +3,14 @@
 import React, { useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { CalculatorInput, CalculatorOutput, GpuSpec, ModelVariant, SpecMethod } from "@/lib/calculator/types";
-import { geometry, isEncoderTask, weightBytes } from "@/lib/calculator/engine";
+import { UNSLOTH_LOADER, geometry, isEncoderTask, weightBytes } from "@/lib/calculator/engine";
 import { Button } from "@/components/ui/button";
 import type { ServingOptions } from "@/lib/calculator/planner";
 import { Section } from "./controls";
 
 /*
  * Flags checked against vLLM 0.31, SGLang 0.5.21, TensorRT-LLM 1.2.1, llama.cpp master, Ollama, transformers serve,
- * the Unsloth CLI, TRL and torchtune 0.6 (October 2026). Runtimes rename flags often; re-check when they bump.
+ * the Unsloth CLI (train, run), TRL and torchtune 0.6 (October 2026). Runtimes rename flags often; re-check when they bump.
  */
 
 /** One copy of a model, as its runtime should start it. */
@@ -53,14 +53,17 @@ const NAMES: Record<string, string> = {
   ollama: "Ollama",
   hf_transformers: "Transformers",
   tei: "TEI",
+  unsloth: "Unsloth",
 };
-const PORTS: Record<string, number> = { sglang: 30000, llama_cpp: 8080, ollama: 11434, tei: 3000 };
+const PORTS: Record<string, number> = { sglang: 30000, llama_cpp: 8080, ollama: 11434, tei: 3000, unsloth: 8888 };
 /** Speculative methods each runtime runs. Ollama only turns MTP on by itself. */
 const SPEC_SUPPORT: Record<string, SpecMethod[]> = {
   vllm: ["draft", "eagle3", "mtp", "dflash", "ngram", "suffix"],
   sglang: ["draft", "eagle3", "mtp", "dflash", "ngram"],
   tensorrt_llm: ["draft", "eagle3", "mtp", "ngram"],
   llama_cpp: ["draft", "eagle3", "mtp", "dflash", "ngram"],
+  // GGUF files only; Unsloth finds the drafter itself.
+  unsloth: ["mtp", "dflash", "ngram"],
 };
 const DRAFTER: Partial<Record<SpecMethod, string>> = {
   draft: "<draft-model>",
@@ -105,12 +108,17 @@ export function launch(model: ModelVariant, l: Launch): { cmd: string | null; no
   const portNum = l.copy != null ? (PORTS[l.runtime] ?? 8000) + l.copy : l.runtime === "llama_cpp" ? 8080 : null;
   const port = portNum && `--port ${portNum}`;
 
-  const spec = l.spec && (SPEC_SUPPORT[l.runtime] ?? []).includes(l.spec.method) ? l.spec : null;
+  const specGguf = l.runtime === "unsloth" && !isGguf(l.quant);
+  const spec = !specGguf && l.spec && (SPEC_SUPPORT[l.runtime] ?? []).includes(l.spec.method) ? l.spec : null;
   const k = spec?.tokens ?? 0;
-  const drafter = spec && DRAFTER[spec.method];
+  const drafter = spec && l.runtime !== "unsloth" && DRAFTER[spec.method];
   // Generic gets no command at all, so no note about what the command leaves out.
   if (l.spec && !spec && l.runtime in NAMES && !(l.runtime === "ollama" && l.spec.method === "mtp"))
-    notes.push(`${runtime} doesn't support ${SPEC_PHRASES[l.spec.method]}, so the command leaves speculative decoding out.`);
+    notes.push(
+      specGguf
+        ? "Unsloth only runs speculative decoding with GGUF files, so the command leaves it out."
+        : `${runtime} doesn't support ${SPEC_PHRASES[l.spec.method]}, so the command leaves speculative decoding out.`,
+    );
   if (drafter) {
     const file = l.runtime === "llama_cpp" ? " (as a GGUF file)" : "";
     notes.push(
@@ -125,7 +133,7 @@ export function launch(model: ModelVariant, l: Launch): { cmd: string | null; no
     notes.push(
       l.runtime === "ollama"
         ? "Ollama turns MTP on by itself for Gemma 4 and Qwen3.5 on Apple Silicon; there is no setting for it."
-        : `MTP only works with models that ship MTP layers (DeepSeek-V3, GLM-4.5 and later, Qwen3.5, MiMo)${l.runtime === "llama_cpp" ? " and a GGUF that keeps them" : ""}.`,
+        : `MTP only works with models that ship MTP layers (DeepSeek-V3, GLM-4.5 and later, Qwen3.5, MiMo)${["llama_cpp", "unsloth"].includes(l.runtime) ? " and a GGUF that keeps them" : ""}.`,
     );
 
   const off = l.offload;
@@ -269,6 +277,48 @@ export function launch(model: ModelVariant, l: Launch): { cmd: string | null; no
       );
       break;
     }
+    case "unsloth": {
+      if (isGguf(l.quant)) {
+        // Unsloth starts llama-server and passes the flags it doesn't manage (-ngl, -fa, -ctk, ...) through to it.
+        const kv = GGUF_KV[l.kvQuant ?? ""];
+        const slots = Math.min(64, l.users);
+        if (l.users > slots) notes.push("Unsloth runs at most 64 requests at once; the others wait.");
+        if (kv && l.flash === false) notes.push("A quantized KV cache needs flash attention, so the command keeps it on.");
+        if (spec?.method === "dflash")
+          notes.push("Unsloth uses the DFlash drafter (dflash-*.gguf) stored with the model; z-lab publishes them.");
+        if ((l.machines ?? 1) > 1) notes.push("Unsloth runs a copy on one machine; llama.cpp can spread it over several.");
+        cmd = join(
+          `${env}unsloth run --model unsloth/${name.split("/").pop()}-GGUF --gguf-variant ${l.quant.toUpperCase()}`,
+          // The parallel slots share one context, so it holds every user's.
+          `--context-length ${l.contextLength * slots} --parallel ${slots}`,
+          l.tp > 1 && "--tensor-parallel",
+          // Without offloading Unsloth places the layers itself.
+          off && (g.moe ? `-ngl all -ncmoe ${Math.ceil(g.layers * off.fraction)}` : `-ngl ${gpuLayers}`),
+          kvOffGb > 0 && "-nkvo",
+          kv ? `-fa on -ctk ${kv} -ctv ${kv}` : l.flash === false && "-fa off",
+          spec && `--speculative-type ${spec.method}`,
+          spec?.method === "mtp" && `--spec-draft-n-max ${Math.min(16, k)}`,
+          port,
+        );
+      } else {
+        // Unsloth's loader takes 16-bit and 4-bit (bitsandbytes) weights; vLLM serves the other formats.
+        const engine = !UNSLOTH_LOADER.has(l.quant);
+        if (engine) notes.push("Unsloth installs vLLM the first time it serves with it, on Linux (or WSL2) with NVIDIA GPUs.");
+        if (off) notes.push("Unsloth only offloads GGUF files to CPU memory, so the command leaves offloading out.");
+        if (l.kvQuant && !["auto", "fp16"].includes(l.kvQuant))
+          notes.push("Unsloth only quantizes the KV cache of GGUF files, so the command leaves it out.");
+        cmd = join(
+          `${env}unsloth run --model ${name}`,
+          engine ? "--engine vllm" : l.quant === "int4" ? "--load-in-4bit" : "--no-load-in-4bit",
+          engine && ["fp8", "int8"].includes(l.quant) && `--engine-precision ${l.quant}`,
+          engine && l.pp > 1 && "--engine-parallelism pipeline",
+          `--context-length ${l.contextLength}`,
+          port,
+        );
+      }
+      notes.push("Unsloth prints an API key when it starts; clients send it as a Bearer token.");
+      break;
+    }
     case "hf_transformers": {
       const bnb = ({ int8: "bnb-8bit", int4: "bnb-4bit" } as Record<string, string>)[l.quant];
       if (l.flash !== false) notes.push("FlashAttention 2 needs the flash-attn package (pip install flash-attn).");
@@ -295,16 +345,20 @@ export function launch(model: ModelVariant, l: Launch): { cmd: string | null; no
     default:
       cmd = null;
       notes.push(
-        "Generic has no launch command; pick vLLM, SGLang, TensorRT-LLM, llama.cpp, Ollama or Transformers as the runtime.",
+        "Generic has no launch command; pick vLLM, SGLang, TensorRT-LLM, llama.cpp, Ollama, Unsloth or Transformers as the runtime.",
       );
   }
 
   const q = l.quant.toUpperCase();
+  const fetchNote: Record<string, string> = {
+    ollama: `. Then run ollama run hf.co/<user>/<repo>:${q}`,
+    unsloth: `. The command uses Unsloth's own upload; if it has none, point --model at the repo that does`,
+  };
   if (isGguf(l.quant))
     notes.push(
-      ["llama_cpp", "ollama", "vllm"].includes(l.runtime)
-        ? `Needs a ${q} GGUF file of ${name}; most popular models have one on Hugging Face${l.runtime === "ollama" ? `. Then run ollama run hf.co/<user>/<repo>:${q}` : ""}.`
-        : `${runtime} doesn't serve GGUF files; use llama.cpp or Ollama for them.`,
+      ["llama_cpp", "ollama", "unsloth", "vllm"].includes(l.runtime)
+        ? `Needs a ${q} GGUF file of ${name}; most popular models have one on Hugging Face${fetchNote[l.runtime] ?? ""}.`
+        : `${runtime} doesn't serve GGUF files; use llama.cpp, Ollama or Unsloth for them.`,
     );
   else if (PREQUANTIZED[l.quant] || (l.runtime === "tensorrt_llm" && l.quant !== "fp16"))
     notes.push(
@@ -518,7 +572,7 @@ export function RunSection({ input, gpu, output }: { input: CalculatorInput; gpu
           span > 1
             ? runtime === "vllm"
               ? `Each copy spans ${span} ${where}: start Ray on them first (ray start --head on one, ray start --address=<head-ip>:6379 on the others), then run this on the head.`
-              : runtime !== "llama_cpp" && `Each copy spans ${span} ${where}; follow your runtime's multi-node guide.`
+              : !["llama_cpp", "unsloth"].includes(runtime) && `Each copy spans ${span} ${where}; follow your runtime's multi-node guide.`
             : machines > 1 && `Run the same on each of the ${machines} ${where}.`,
           output.replicas > 1 && `That makes ${output.replicas} copies: put them behind a load balancer (e.g. LiteLLM or nginx).`,
         ]}

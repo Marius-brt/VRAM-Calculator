@@ -10,7 +10,7 @@ import { formatParams } from "./ModelSelector";
 
 type Sort = "popular" | "newest" | "largest" | "fastest";
 
-const GGUF_RUNTIMES = new Set(["llama_cpp", "ollama"]);
+const GGUF_RUNTIMES = new Set(["llama_cpp", "ollama", "unsloth"]);
 const LABELS: Record<string, string> = { fp16: "BF16", fp8: "FP8", awq: "4-bit", q8_0: "Q8_0", q6_k: "Q6_K", q4_k_m: "Q4_K_M" };
 
 interface Props {

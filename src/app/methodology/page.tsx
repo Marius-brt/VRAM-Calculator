@@ -36,6 +36,7 @@ const RUNTIME_NAMES: Record<string, string> = {
   tensorrt_llm: "TensorRT-LLM",
   llama_cpp: "llama.cpp",
   ollama: "Ollama",
+  unsloth: "Unsloth",
   hf_transformers: "Transformers",
   generic: "Other",
 };
@@ -556,7 +557,8 @@ export default function MethodologyPage() {
             consumer, workstation or datacenter), but only for a class with more GPUs than constants to fit. That matters: on
             prompts, llama.cpp reaches about 1.2× the catalog&apos;s FP16 figure on GeForce cards (its integer kernels beat the
             half-rate figure GeForce cards are rated at), about 0.5× on NVIDIA workstation cards and 0.15× to 0.3× on datacenter
-            GPUs. Ollama runs llama.cpp and uses its constants.
+            GPUs. Ollama runs llama.cpp and uses its constants. So does Unsloth for GGUF files; other checkpoints go to its
+            Transformers-based loader, with the Transformers constants, or for FP8, INT8 and pre-quantized formats to vLLM.
           </p>
           <Table
             head={["Runtime", "GPUs", "Bandwidth η", "Per layer", "Prompt μ", "Fixed t₀"]}
@@ -737,8 +739,9 @@ export default function MethodologyPage() {
           <p>
             The commands under Run it are built from the same setup: tensor and pipeline parallelism, context length, users,
             precision, KV cache format, speculative decoding, offloading and, for several copies, one process per copy with its
-            own GPUs and port. They cover vLLM, SGLang, TensorRT-LLM, llama.cpp, Ollama, Transformers and Text Embeddings
-            Inference, and Unsloth, TRL and torchtune for fine-tuning. Flags follow each project&apos;s documentation; check them
+            own GPUs and port. They cover vLLM, SGLang, TensorRT-LLM, llama.cpp, Ollama, Unsloth, Transformers and Text
+            Embeddings Inference, and Unsloth, TRL and torchtune for fine-tuning. Flags follow each project&apos;s documentation;
+            check them
             against the version you install.
           </p>
 
