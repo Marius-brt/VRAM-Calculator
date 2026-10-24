@@ -1,4 +1,4 @@
-import { calculate, runtimeFor } from "./engine";
+import { backendOf, calculate, runtimeFor } from "./engine";
 import type { CalculatorInput, SpecMethod } from "./types";
 import { GPUS, MODELS } from "../data";
 import benchmarks from "../data/benchmarks.json";
@@ -63,7 +63,7 @@ export function predict(b: Benchmark): number {
   if (b.metric === "decode_tps") return out.per_user_tps ?? NaN;
   if (b.metric === "ttft_ms") return out.ttft_ms ?? NaN;
   // llama-bench times prompt processing alone, without the request overhead included in time to first token.
-  return b.tokens / (((out.ttft_ms ?? NaN) - (runtimeFor(b.runtime, gpu).ttftMs ?? 15)) / 1000);
+  return b.tokens / (((out.ttft_ms ?? NaN) - (runtimeFor(backendOf(b.runtime, b.quant), gpu).ttftMs ?? 15)) / 1000);
 }
 
 /** Typical error: exp(mean |log(predicted / measured)|) − 1, so 0.2 means predictions are off by about 20%. */

@@ -297,6 +297,9 @@ test("Unsloth takes llama.cpp's constants for GGUF files and Transformers' for i
     concurrent_users: 4,
   });
   assert.ok(busy.warnings.some((w) => w.includes("one request at a time")));
+  // A benchmark run through Unsloth's llama-server is predicted as llama.cpp.
+  const bench = BENCHMARKS.find((b) => b.runtime === "llama_cpp" && b.metric === "prefill_tps");
+  assert.equal(predict({ ...bench, runtime: "unsloth" }), predict(bench));
 });
 
 test("trainCommand: TRL with ZeRO-3 over 4 GPUs", () => {

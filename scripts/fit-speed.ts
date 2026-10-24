@@ -5,11 +5,13 @@
  * Run: bun scripts/fit-speed.ts         prints the error of the current fit, row by row
  *      bun scripts/fit-speed.ts --write  refits and writes src/lib/data/speed-fit.json
  */
-import { FITTED, gpuClass, RUNTIMES } from "../src/lib/calculator/engine";
+import { FITTED, backendOf, gpuClass, RUNTIMES } from "../src/lib/calculator/engine";
 import { BENCHMARKS, predict, typicalError, type Benchmark } from "../src/lib/calculator/benchmarks";
 import { GPUS } from "../src/lib/data";
 
 const gpuOf = (b: Benchmark) => GPUS.find((g) => g.key === b.gpu)!;
+// Unsloth rows count toward the runtime that served them: llama.cpp for GGUF files, Transformers or vLLM otherwise.
+const backend = (b: Benchmark) => backendOf(b.runtime, b.quant);
 const loss = (rows: Benchmark[]) => rows.reduce((s, b) => s + Math.log(predict(b) / b.value) ** 2, 0);
 
 // Which constants each kind of measurement pins down, and the range they may take. prefillMfu is relative to the
@@ -52,8 +54,8 @@ function fit(group: Record<string, number>, rows: Benchmark[], base: Record<stri
 /** Refits FITTED in place from these rows: each runtime for all GPUs, then per GPU class where the data allows. */
 export function fitAll(rows: Benchmark[]) {
   for (const k of Object.keys(FITTED)) delete FITTED[k];
-  for (const runtime of new Set(rows.map((b) => b.runtime))) {
-    const own = rows.filter((b) => b.runtime === runtime);
+  for (const runtime of new Set(rows.map(backend))) {
+    const own = rows.filter((b) => backend(b) === runtime);
     const fitted: Record<string, Record<string, number>> = { all: {} };
     FITTED[runtime] = fitted;
     fit(fitted.all, own, RUNTIMES[runtime] as unknown as Record<string, number>);

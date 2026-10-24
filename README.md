@@ -67,7 +67,7 @@ Every formula, constant and benchmark is on the [methodology page](https://vram-
 ## Contribute a benchmark
 
 Measurements from real servers make the estimates better. On the machine that serves the model, run the benchmark
-script. It measures a running vLLM server, or a GGUF file with llama-bench, and writes a `report.md`:
+script. It measures a running vLLM or Unsloth server, or a GGUF file with llama-bench, and writes a `report.md`:
 
 ```bash
 curl -fsSLO https://raw.githubusercontent.com/Marius-brt/VRAM-Calculator/main/scripts/benchmark.sh
@@ -77,7 +77,8 @@ curl -fsSLO https://raw.githubusercontent.com/Marius-brt/VRAM-Calculator/main/sc
 bash benchmark.sh --docker <container> --users 12
 ```
 
-Leave out `--docker` when vLLM runs directly on the machine; `bash benchmark.sh --help` lists the options. Then paste the
+Leave out `--docker` when vLLM runs directly on the machine. For `unsloth run`, use
+`bash benchmark.sh --unsloth --api-key <the key it printed>`; `bash benchmark.sh --help` lists the options. Then paste the
 report into a [benchmark issue](https://github.com/Marius-brt/VRAM-Calculator/issues/new?template=benchmark.yml).
 
 Maintainers add the rows to [`benchmarks.json`](src/lib/data/benchmarks.json), refit and check the error on GPUs the

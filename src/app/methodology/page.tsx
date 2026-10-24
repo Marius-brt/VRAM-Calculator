@@ -559,6 +559,7 @@ export default function MethodologyPage() {
             half-rate figure GeForce cards are rated at), about 0.5× on NVIDIA workstation cards and 0.15× to 0.3× on datacenter
             GPUs. Ollama runs llama.cpp and uses its constants. So does Unsloth for GGUF files; other checkpoints go to its
             Transformers-based loader, with the Transformers constants, or for FP8, INT8 and pre-quantized formats to vLLM.
+            Measurements taken through Unsloth count toward the fit of the runtime that served them.
           </p>
           <Table
             head={["Runtime", "GPUs", "Bandwidth η", "Per layer", "Prompt μ", "Fixed t₀"]}
@@ -636,7 +637,7 @@ export default function MethodologyPage() {
           </p>
           <p>
             Measurements from more hardware make the fit better. The <A href={code("scripts/benchmark.sh")}>benchmark script</A>{" "}
-            measures a running vLLM server or a GGUF file with llama-bench and writes a report to paste into a{" "}
+            measures a running vLLM or Unsloth server, or a GGUF file with llama-bench, and writes a report to paste into a{" "}
             <A href={`${REPO_URL}/issues/new?template=benchmark.yml`}>benchmark issue</A>.
           </p>
 

@@ -13,9 +13,9 @@ body:
         bash benchmark.sh --help
         ```
 
-        It benchmarks a running vLLM server (`--docker <container>` if it runs in Docker) or a GGUF file with
-        llama-bench (`--gguf model.gguf`), then writes `report.md`. Results from `vllm bench serve` or `llama-bench`
-        run by hand are welcome too.
+        It benchmarks a running vLLM server (`--docker <container>` if it runs in Docker), an `unsloth run` server
+        (`--unsloth --api-key <key>`) or a GGUF file with llama-bench (`--gguf model.gguf`), then writes `report.md`.
+        Results from `vllm bench serve` or `llama-bench` run by hand are welcome too.
   - type: input
     id: gpus
     attributes:
@@ -40,6 +40,7 @@ body:
         - TensorRT-LLM
         - llama.cpp
         - Ollama
+        - Unsloth
         - Other
     validations:
       required: true
