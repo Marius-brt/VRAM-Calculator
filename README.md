@@ -73,13 +73,21 @@ script. It measures a running vLLM or Unsloth server, or a GGUF file with llama-
 curl -fsSLO https://raw.githubusercontent.com/Marius-brt/VRAM-Calculator/main/scripts/benchmark.sh
 ```
 
+For vLLM, set `--users` to your `--max-num-seqs`, and leave out `--docker` when vLLM runs directly on the machine:
+
 ```bash
 bash benchmark.sh --docker <container> --users 12
 ```
 
-Leave out `--docker` when vLLM runs directly on the machine. For `unsloth run`, use
-`bash benchmark.sh --unsloth --api-key <the key it printed>`; `bash benchmark.sh --help` lists the options. Then paste the
-report into a [benchmark issue](https://github.com/Marius-brt/VRAM-Calculator/issues/new?template=benchmark.yml).
+For Unsloth, pass the API key `unsloth run` printed when it started. The script benchmarks the model it has loaded, and
+`--users 4` matches its default of 4 parallel slots:
+
+```bash
+bash benchmark.sh --unsloth --api-key <key> --users 4
+```
+
+`bash benchmark.sh --help` lists every option. Then paste the report into a
+[benchmark issue](https://github.com/Marius-brt/VRAM-Calculator/issues/new?template=benchmark.yml).
 
 Maintainers add the rows to [`benchmarks.json`](src/lib/data/benchmarks.json), refit and check the error on GPUs the
 fit hasn't seen:
