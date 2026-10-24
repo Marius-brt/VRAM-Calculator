@@ -15,6 +15,7 @@
 #   --docker NAME    run everything inside this container (docker ps shows the name)
 #   --unsloth        benchmark an `unsloth run` server instead of a vLLM server
 #   --api-key KEY    the API key `unsloth run` printed (or set BENCH_API_KEY); never written to the report
+#   --model ID       with --unsloth, the model to benchmark; default the one it has loaded
 #   --gguf FILE      benchmark a GGUF file with llama-bench instead of a server
 #
 # vLLM runs use `vllm bench serve` against the running server; Unsloth runs use a small Python client that streams
@@ -28,6 +29,7 @@ USERS=8
 DOCKER=
 GGUF=
 UNSLOTH=
+MODEL=
 while [ $# -gt 0 ]; do
   case $1 in
     --url) URL=$2; shift 2 ;;
@@ -35,8 +37,9 @@ while [ $# -gt 0 ]; do
     --docker) DOCKER=$2; shift 2 ;;
     --unsloth) UNSLOTH=1; shift ;;
     --api-key) BENCH_API_KEY=$2; shift 2 ;;
+    --model) MODEL=$2; shift 2 ;;
     --gguf) GGUF=$2; shift 2 ;;
-    -h | --help) sed -n '2,23p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h | --help) sed -n '2,24p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "Unknown option: $1 (see --help)" >&2; exit 1 ;;
   esac
 done
@@ -209,7 +212,15 @@ print(urllib.request.urlopen(req, timeout=10).read().decode())' "$1"
 
   if [ -n "$UNSLOTH" ]; then
     write_client
-    model=$(run python3 -c 'import json, sys; print(json.load(sys.stdin)["data"][0]["id"])' < "$OUT/models.json")
+    # Unsloth lists every downloaded model and flags the loaded ones; a pinned id (repo:quant) names the quant too.
+    model=${MODEL:-$(run python3 -c 'import json, sys
+rows = json.load(sys.stdin)["data"]
+loaded = [m["id"] for m in rows if m.get("loaded")] if any("loaded" in m for m in rows) else [m["id"] for m in rows[:1]]
+print(sorted(loaded, key=lambda i: ":" not in i)[0] if loaded else "")' < "$OUT/models.json")}
+    if [ -z "$model" ]; then
+      echo "Unsloth has no model loaded. Start one with unsloth run --model <repo>, or pass --model." >&2
+      exit 1
+    fi
     version=$(fetch "$URL/api/health" 2>/dev/null | run python3 -c 'import json, sys; print("Unsloth", json.load(sys.stdin)["version"])' 2>/dev/null ||
       run unsloth --version 2>/dev/null || echo "Unsloth, version unknown")
   else
@@ -241,8 +252,13 @@ print(urllib.request.urlopen(req, timeout=10).read().decode())' "$1"
     echo "## Server"
     echo "$version"
     echo
-    echo "Models served:"
-    fence < "$OUT/models.json"
+    if [ -n "$UNSLOTH" ]; then
+      # Just the one benchmarked: the full list names every model downloaded on the machine.
+      echo "Model: $model"
+    else
+      echo "Models served:"
+      fence < "$OUT/models.json"
+    fi
     echo "Launch command:"
     echo "${command:-not found, please paste it in the issue}" | mask | fence
     echo "## 1 user"
